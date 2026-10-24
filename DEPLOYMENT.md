@@ -8,3 +8,9 @@ Actualización: 23 de octubre de 2026, Bogotá.
 - Los respaldos privados locales están en .private/, excluidos de Git y del sitio publicado.
 
 Registrar aquí los cambios externos de configuración sin incorporar credenciales ni registros de auditoría.
+
+## Publicación de código verificada
+
+El proyecto completo (60 archivos) se publicó directamente mediante la sesión de GitHub, sin depender de la autorización de Git Credential Manager bloqueada por correo. Se recuperó origin/main y se verificaron compilación y pruebas de indicadores y almacenamiento. No hay datos privados de Almera en Git.
+
+El push desde el equipo sigue pendiente de autorización; los cambios realizados mediante la interfaz de GitHub quedan registrados directamente en main. Render permanece bloqueado por la verificación del correo institucional.
