@@ -26,3 +26,17 @@ Sitio estático publicado y abierto correctamente: https://auditor-centros-excel
 Proyecto: ctelyszqiulavfsowged. Migración 20261023_ce_workspace.sql aplicada. Tabla ce_workspaces con acceso por propietario autenticado; acceso anónimo revocado. Conexión protegida comprobada desde el sitio público. Falta completar una cuenta de Supabase Auth y comprobar guardado y recuperación autenticados antes de declarar la sincronización operativa.
 
 Los respaldos privados están en .private/, excluidos de Git y de la publicación. El sitio nuevo muestra el directorio de 32 centros; el corte de Almera y los registros privados se cargan o recuperan por cuenta. No hay consulta en vivo de Almera ni envío automático de correos.
+
+## Preparación para el trabajo diario · 26 de octubre de 2026
+
+Cuenta privada de Supabase Auth creada y verificada en el panel administrativo. Corte privado importado en el navegador del sitio publicado. El guardado y la recuperación autenticados deben comprobarse desde la cuenta de la auditora.
+
+Se incorporaron creación y edición de tareas con checklist obligatorio, guardado automático opcional tras el primer respaldo manual, detección de cambios pendientes, renovación de sesión y conservación de sesión por pestaña únicamente si la persona activa esa opción. Las credenciales quedan excluidas de los respaldos de auditoría. Las fechas de revisión de la auditora se separan de las fechas registradas de las autoevaluaciones.
+
+Guía de uso: GUIA_DIARIA.md. Registrar la confirmación de guardado y la publicación de esta actualización después de verificarlas.
+
+## Trazabilidad de revisión de matrices
+
+La tabla de riesgos distingue el resultado y fecha de consulta, el sistema anual, la evaluación documentada de controles y la fecha visible del análisis. Estas dos últimas no sustituyen las fechas formales de creación, revisión de matriz, ejecución de controles o revisión residual. La evidencia y el checklist se consultan por registro. Los resultados institucionales permanecen en el respaldo privado; no se incorporan al código ni al despliegue estático.
+
+Validación: TypeScript, comprobaciones de base de datos, 23 comprobaciones de indicadores y compilación de producción satisfactorias.
