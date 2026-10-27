@@ -40,3 +40,7 @@ Guía de uso: GUIA_DIARIA.md. Registrar la confirmación de guardado y la public
 La tabla de riesgos distingue el resultado y fecha de consulta, el sistema anual, la evaluación documentada de controles y la fecha visible del análisis. Estas dos últimas no sustituyen las fechas formales de creación, revisión de matriz, ejecución de controles o revisión residual. La evidencia y el checklist se consultan por registro. Los resultados institucionales permanecen en el respaldo privado; no se incorporan al código ni al despliegue estático.
 
 Validación: TypeScript, comprobaciones de base de datos, 23 comprobaciones de indicadores y compilación de producción satisfactorias.
+
+## Ingreso diario · 27 de octubre de 2026
+
+Ruta permanente `/ingreso`, cubierta por la reescritura SPA existente. Abre el panel de cuenta sin guardar credenciales y presenta agenda, indicadores, riesgos y fechas de consulta por módulo. La fecha de hoy se calcula en Bogotá y no se confunde con el corte de datos. Se advierte cuando no existe consulta cargada para hoy. El respaldo autenticado debe confirmarse desde la cuenta de la auditora. La actualización diaria de Almera sigue requiriendo acceso institucional y una consulta/importación; no se declara una sincronización programada inexistente.
