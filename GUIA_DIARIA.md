@@ -1,6 +1,8 @@
 # Trabajo diario de auditoría
 
-Sitio publicado: https://auditor-centros-excelencia.onrender.com/
+Ingreso diario: https://auditor-centros-excelencia.onrender.com/ingreso
+
+Guarda este enlace como favorito o escríbelo en la barra de direcciones. Abre el acceso a la cuenta y muestra la fecha de consulta cargada de indicadores y matrices por separado. La fecha del día no significa que se haya actualizado Almera.
 
 ## Al comenzar
 
