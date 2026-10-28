@@ -27,6 +27,9 @@ global.fetch=async(url,options={})=>{
  assert.deepEqual(first.payload.evidence,{centers:[],indicators:[],entries:[]});
  const fingerprint=db.workspaceFingerprint();assert.equal(db.workspaceFingerprint(),fingerprint);
  memory.set('nigma_ce_daily_tasks','[{"id":"changed"}]');assert.notEqual(db.workspaceFingerprint(),fingerprint);
+ memory.set('nigma_ce_audit_workspace_v1',JSON.stringify([{id:'manual-only',notes:'Personal note'},{id:'almera-matriz-verificada-test',notes:'Manual observation',created:'2026-01-02',checklist:[{label:'Manual verification',done:true}]}]));
+ db.importPrivateBackup({schemaVersion:1,evidence:{centers:[],indicators:[],entries:[{id:'almera-matriz-verificada-test',kind:'Matrices de riesgos',notes:'New source evidence',riskVerification:{checkedOn:'2026-10-28'}}]}});
+ const imported=JSON.parse(memory.get('nigma_ce_audit_workspace_v1'));assert.equal(imported.length,2);assert.equal(imported[0].notes,'Personal note');assert.equal(imported[1].notes,'Manual observation');assert.equal(imported[1].created,'2026-01-02');assert.equal(imported[1].checklist[0].done,true);assert.equal(imported[1].sourceNotes,'New source evidence');assert.equal(imported[1].riskVerification.checkedOn,'2026-10-28');assert.equal(db.currentAccount(),'owner@example.com','Import must preserve the signed-in account.');assert.ok(memory.has('nigma_ce_before_private_import'));
  expired=true;await db.signIn('owner@example.com','test',true);assert.equal(tabMemory.size,1);assert.equal(db.currentAccount(),'owner@example.com');
  await db.readWorkspace();assert.equal(refreshCalls,1,'Expired sessions should be refreshed before accessing private data.');
  assert.equal(JSON.stringify(db.collectSnapshot()).includes('test-refresh-token'),false,'Authentication must never be included in audit backups.');
