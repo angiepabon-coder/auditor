@@ -1,4 +1,4 @@
-import {readPrivateEvidence} from '../data/privateEvidence';
+import {readPrivateEvidence,refreshPrivateEvidence} from '../data/privateEvidence';
 export const projectUrl='https://ctelyszqiulavfsowged.supabase.co';
 // Publishable client key only. Access to private records is enforced by RLS.
 const publicKey=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY||'sb_publishable_x4hmozbrJuv7kP6HnZNDAg_EVFF0nq9';
@@ -68,5 +68,13 @@ export function restoreWorkspace(row:Workspace){
 export function importPrivateBackup(value:unknown){
  const payload=value as Snapshot;
  if(payload?.schemaVersion!==1||!payload.evidence||!Array.isArray(payload.evidence.centers)||!Array.isArray(payload.evidence.indicators)||!Array.isArray(payload.evidence.entries))throw new Error('El archivo no contiene un respaldo privado compatible.');
- localStorage.setItem('nigma_ce_evidence_v1',JSON.stringify(payload.evidence));
+ const evidenceKey='nigma_ce_evidence_v1',workspaceKey='nigma_ce_audit_workspace_v1';
+ const previousEvidence=localStorage.getItem(evidenceKey),previousWorkspace=localStorage.getItem(workspaceKey);
+ const existing=JSON.parse(previousWorkspace||'[]');if(!Array.isArray(existing))throw new Error('El espacio local necesita revisión antes de importar.');
+ const matrices=payload.evidence.entries.filter(item=>item&&item.kind==='Matrices de riesgos'&&typeof item.id==='string'&&item.id.startsWith('almera-matriz-verificada-'));
+ const merged=existing.map(saved=>{const incoming=matrices.find(item=>item.id===saved.id);return incoming?{...saved,riskVerification:incoming.riskVerification,sourceNotes:incoming.notes}:saved;});
+ for(const item of matrices)if(!merged.some(saved=>saved.id===item.id))merged.push(item);
+ localStorage.setItem('nigma_ce_before_private_import',JSON.stringify({evidence:previousEvidence,workspace:previousWorkspace}));
+ try{localStorage.setItem(workspaceKey,JSON.stringify(merged));localStorage.setItem(evidenceKey,JSON.stringify(payload.evidence));}catch(error){for(const [key,value]of[[workspaceKey,previousWorkspace],[evidenceKey,previousEvidence]]){if(value===null)localStorage.removeItem(key!);else localStorage.setItem(key!,value!);}throw error;}
+ refreshPrivateEvidence();if(typeof window!=='undefined')window.dispatchEvent(new Event('ce-private-evidence-updated'));
 }
