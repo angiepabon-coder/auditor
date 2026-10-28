@@ -36,6 +36,8 @@ export const AppShell: React.FC = () => {
 
   const renderCurrentView = () => {
     switch (currentRoute) {
+      case '/account':
+        return null;
       case '/dashboard':
         return <DashboardView />;
       case '/audit-plan':
@@ -100,7 +102,9 @@ export const AppShell: React.FC = () => {
       >
         {/* Topbar */}
         <Topbar onToggleMobileMenu={() => setMobileSidebarOpen(prev => !prev)} />
-        <DatabasePanel />
+        <div hidden={currentRoute!=='/account'}>
+          <DatabasePanel />
+        </div>
 
         {/* Viewport Content */}
         <main className="flex-1 p-4 lg:p-6 max-w-7xl w-full mx-auto">
