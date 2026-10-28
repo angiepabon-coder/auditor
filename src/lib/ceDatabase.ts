@@ -53,6 +53,18 @@ export function collectSnapshot():Snapshot{
  return {schemaVersion:1,savedAt:new Date().toISOString(),local,evidence:readPrivateEvidence()};
 }
 export function workspaceFingerprint(){const {local,evidence}=collectSnapshot();return JSON.stringify({local,evidence});}
+export function hasLocalWorkspaceData(){
+ const {local}=collectSnapshot();const evidence=readPrivateEvidence();
+ if(evidence.centers.length||evidence.indicators.length||evidence.entries.length)return true;
+ return Object.entries(local).some(([key,value])=>{
+  if(key==='nigma_ce_evidence_v1')return false;
+  if(Array.isArray(value))return value.length>0;
+  if(!value||typeof value!=='object')return false;
+  const record=value as Record<string,unknown>;
+  if(key==='nigma_ce_indicators_v1')return Object.values(record).some(v=>Array.isArray(v)?v.length>0:!!v&&typeof v==='object'&&Object.keys(v).length>0);
+  return Object.keys(record).length>0;
+ });
+}
 export async function saveWorkspace(revision:number|null,payload=collectSnapshot()):Promise<Workspace>{
  await ensureSession();if(!session)throw new Error('Inicia sesión para guardar tus registros.');
  const row={owner_id:session.user.id,revision:(revision||0)+1,payload,updated_at:new Date().toISOString()};
@@ -64,6 +76,7 @@ export function restoreWorkspace(row:Workspace){
  const values=workspaceKeys.filter(k=>Object.hasOwn(row.payload.local,k)).map(k=>[k,JSON.stringify(row.payload.local[k])] as const);const previous=workspaceKeys.map(k=>[k,localStorage.getItem(k)] as const);
  localStorage.setItem('nigma_ce_before_database_restore',JSON.stringify(Object.fromEntries(previous)));
  try{for(const key of workspaceKeys)localStorage.removeItem(key);for(const [k,v] of values)localStorage.setItem(k,v);}catch(error){for(const [k,v] of previous){if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}throw error;}
+ refreshPrivateEvidence();if(typeof window!=='undefined')window.dispatchEvent(new Event('ce-private-evidence-updated'));
 }
 export function importPrivateBackup(value:unknown){
  const payload=value as Snapshot;
