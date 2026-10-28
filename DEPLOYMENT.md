@@ -56,3 +56,7 @@ Se programó revisión diaria a las 06:00 de Bogotá y se actualizó el asistent
 Las tareas de revisión pueden registrarse sin fecha de compromiso impuesta. Se muestran como «por acordar» y no se cuentan como vencidas. Las fechas de fuente y las pendientes de confirmar permanecen diferenciadas.
 
 Validación: TypeScript, comprobaciones de base de datos con preservación de registros manuales, 23 comprobaciones de indicadores y compilación de producción satisfactorias.
+
+## Acceso en una sola sección · 28 de octubre de 2026
+
+El bloque de ingreso, conexión y respaldos se muestra únicamente en «Mi cuenta y datos». La ruta /ingreso abre esa sección. En Dashboard, indicadores, riesgos, planes y reportes no se repite el bloque. El panel permanece montado y oculto al navegar para conservar la sesión y el guardado automático activo; no cambia la política de conservación de credenciales.
