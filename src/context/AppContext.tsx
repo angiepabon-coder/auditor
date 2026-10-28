@@ -46,6 +46,7 @@ export type AppRoute =
   | '/audit-profile-detail'
   | '/users'
   | '/settings'
+  | '/account'
   | '/centers-excellence'
   | '/daily-tasks'
   | '/indicators'
@@ -127,7 +128,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentRoute, setCurrentRoute] = useState<AppRoute>('/dashboard');
+  const [currentRoute, setCurrentRoute] = useState<AppRoute>(()=>window.location.pathname.replace(/\/$/,'')==='/ingreso'?'/account':'/dashboard');
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('30d');
   const [selectedProfileId, setSelectedProfileId] = useState<string>('profile-1');
   const [selectedAuditId, setSelectedAuditId] = useState<string>('aud-1');
