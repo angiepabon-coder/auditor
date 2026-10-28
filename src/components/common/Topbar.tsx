@@ -134,6 +134,8 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleMobileMenu }) => {
         return [{ label: 'Configuración', route: '/settings' }, { label: 'Usuarios y Permisos RBAC' }];
       case '/settings':
         return [{ label: 'NIGMA', route: '/dashboard' }, { label: 'Configuración del Núcleo' }];
+      case '/account':
+        return [{ label: 'Centros de Excelencia', route: '/dashboard' }, { label: 'Mi cuenta y datos' }];
       default:
         return [{ label: 'NIGMA', route: '/dashboard' }];
     }
