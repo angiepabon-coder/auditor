@@ -58,3 +58,14 @@
 .animate-spin-slow {
   animation: spinSlow 8s linear infinite;
 }
+
+@media print {
+ @page { size: A4; margin: 14mm; }
+ body { background: white !important; color: #172033 !important; }
+ body * { visibility: hidden; }
+ .ce-report, .ce-report * { visibility: visible; }
+ .ce-report { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
+ .ce-report .print\:hidden { display: none !important; }
+ .ce-report section, .ce-report article { break-inside: avoid; box-shadow: none; }
+ .ce-report { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
