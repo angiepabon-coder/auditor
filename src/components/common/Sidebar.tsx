@@ -42,6 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const overduePlansCount = actionPlans.filter(p => p.status === 'Vencido').length;
 
   const mainNavItems = [
+    { label: 'Mi cuenta y datos', route: '/account' as AppRoute, icon: ShieldCheck },
     { label: 'Dashboard', route: '/dashboard' as AppRoute, icon: LayoutDashboard },
     { label: 'SIP y gestión de auditoría', route: '/audit-plan' as AppRoute, icon: CalendarDays },
     { label: 'Auditorías', route: '/audits' as AppRoute, icon: FileCheck2 },
