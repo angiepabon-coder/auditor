@@ -44,3 +44,15 @@ Validación: TypeScript, comprobaciones de base de datos, 23 comprobaciones de i
 ## Ingreso diario · 27 de octubre de 2026
 
 Ruta permanente `/ingreso`, cubierta por la reescritura SPA existente. Abre el panel de cuenta sin guardar credenciales y presenta agenda, indicadores, riesgos y fechas de consulta por módulo. La fecha de hoy se calcula en Bogotá y no se confunde con el corte de datos. Se advierte cuando no existe consulta cargada para hoy. El respaldo autenticado debe confirmarse desde la cuenta de la auditora. La actualización diaria de Almera sigue requiriendo acceso institucional y una consulta/importación; no se declara una sincronización programada inexistente.
+
+## Operación y visuales · 28 de octubre de 2026
+
+Se verificó desde el aplicativo el guardado autenticado de la versión 1 y su consulta posterior en Supabase. Los respaldos continúan aislados por propietario. La importación de evidencia actualiza el corte conservando anotaciones manuales, fechas y checklists, con copia previa local y sin recargar la sesión.
+
+El tablero y la sección Informes presentan gráficos por sede, autoevaluaciones, matrices, planes y agenda. Los gráficos se calculan a partir de datos privados cargados, muestran cifras y alcance, y permiten imprimir/guardar PDF desde el navegador y descargar CSV compatible con Excel. No contienen registros institucionales en el código público. Un registro visible no acredita cumplimiento; el fin registrado de evaluación no se presenta como cierre efectivo.
+
+Se programó revisión diaria a las 06:00 de Bogotá y se actualizó el asistente de agenda y correos a las 06:30. Son automatizaciones locales: requieren equipo encendido, aplicación disponible y sesiones institucionales activas. El procedimiento REVISION_DIARIA.md define consultas, evidencias, conservación de datos y restricciones. No constituye una integración API de Almera ni un servicio continuo en Render. Gmail y calendario institucional conectados y comprobados en lectura; no se envían correos ni se modifican eventos automáticamente.
+
+Las tareas de revisión pueden registrarse sin fecha de compromiso impuesta. Se muestran como «por acordar» y no se cuentan como vencidas. Las fechas de fuente y las pendientes de confirmar permanecen diferenciadas.
+
+Validación: TypeScript, comprobaciones de base de datos con preservación de registros manuales, 23 comprobaciones de indicadores y compilación de producción satisfactorias.
