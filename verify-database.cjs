@@ -33,6 +33,13 @@ global.fetch=async(url,options={})=>{
  expired=true;await db.signIn('owner@example.com','test',true);assert.equal(tabMemory.size,1);assert.equal(db.currentAccount(),'owner@example.com');
  await db.readWorkspace();assert.equal(refreshCalls,1,'Expired sessions should be refreshed before accessing private data.');
  assert.equal(JSON.stringify(db.collectSnapshot()).includes('test-refresh-token'),false,'Authentication must never be included in audit backups.');
+ memory.clear();assert.equal(db.hasLocalWorkspaceData(),false);
+ memory.set('nigma_ce_indicators_v1',JSON.stringify({indicators:[],measurements:[],verifiedMissing:{},checklists:{}}));assert.equal(db.hasLocalWorkspaceData(),false,'An empty form must not prevent cloud recovery.');
+ memory.set('nigma_ce_daily_tasks',JSON.stringify([{id:'manual-preserved'}]));assert.equal(db.hasLocalWorkspaceData(),true,'Manual work must prevent automatic replacement.');
+ let restoreEvents=0;global.window={dispatchEvent:()=>{restoreEvents++;}};
+ const cloudEvidence={centers:[{centerId:'ce-restored'}],indicators:[],entries:[]};
+ db.restoreWorkspace({...second,payload:{...second.payload,local:{nigma_ce_evidence_v1:cloudEvidence},evidence:cloudEvidence}});
+ assert.equal(db.collectSnapshot().evidence.centers[0].centerId,'ce-restored');assert.equal(restoreEvents,1,'Recovery must refresh the open interface without reloading.');assert.equal(db.currentAccount(),'owner@example.com','Recovery must retain the active login.');
  await db.signOut();assert.equal(tabMemory.size,0);assert.equal(db.currentAccount(),'');
  console.log('Database checks passed: authentication, refresh, opt-in tab session, version conflicts, restore, private data isolation.');
 })().catch(e=>{console.error(e.message);process.exit(1);});
