@@ -60,3 +60,7 @@ Validación: TypeScript, comprobaciones de base de datos con preservación de re
 ## Acceso en una sola sección · 28 de octubre de 2026
 
 El bloque de ingreso, conexión y respaldos se muestra únicamente en «Mi cuenta y datos». La ruta /ingreso abre esa sección. En Dashboard, indicadores, riesgos, planes y reportes no se repite el bloque. El panel permanece montado y oculto al navegar para conservar la sesión y el guardado automático activo; no cambia la política de conservación de credenciales.
+
+## Recuperación de información por centro
+
+Al iniciar sesión o abrir una sesión vigente se consulta la copia privada de Supabase. Si el espacio local no contiene trabajo, se recupera automáticamente y se actualiza la interfaz sin recargar ni perder la sesión. Si existen registros manuales, se conservan y se pide elegir la recuperación antes de reemplazarlos. El selector de indicadores muestra el nombre del centro y distingue un corte no recuperado de un centro sin fichas cargadas; no presenta el corte ausente como cumplimiento cero.
