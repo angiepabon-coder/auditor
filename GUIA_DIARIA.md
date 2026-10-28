@@ -31,3 +31,9 @@ El corte de Almera conserva su fecha de consulta. Los registros cargados no se a
 El resumen de la agenda puede copiarse desde **Tareas diarias**. La integración con el asistente local utiliza una copia compartida; el sitio estático no envía correos ni modifica el calendario. El asistente debe informar la fecha de esa copia para que no se confunda con datos actuales.
 
 Los respaldos JSON contienen información privada. La cuenta del aplicativo es independiente del acceso administrativo a Supabase, GitHub y Render.
+
+## Informes visuales
+
+En Inicio o Informes selecciona HIC, ICV o ambas instituciones. Los gráficos muestran autoevaluaciones, matrices, cobertura y planes; cada cifra corresponde al corte cargado. «Datos para Excel» descarga el detalle de centros en CSV. «Imprimir / PDF» abre la impresión del navegador: elige Guardar como PDF. Revisa fechas de consulta y soportes antes de emitir conclusiones.
+
+El seguimiento diario se programó para las 06:00 y el resumen de agenda para las 06:30 de Bogotá. Mantén encendido el equipo y disponibles las sesiones. Si falta acceso a Almera, se debe informar el bloqueo y conservar la fecha del último corte. Las tareas sin compromiso definido se muestran «por acordar».
