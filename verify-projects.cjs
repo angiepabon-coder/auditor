@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict');const esbuild=require('esbuild');
+const output=esbuild.buildSync({entryPoints:['src/data/projectTypes.ts'],bundle:true,write:false,platform:'node',format:'cjs'});const mod={exports:{}};new Function('module','exports',output.outputFiles[0].text)(mod,mod.exports);const {projectNeedsAttention,percent,validateProjectEvidence}=mod.exports;
+const p={id:'test-project',centerId:'test-center',name:'Test fixture',site:'HIC',actual:0,planned:0,compliance:100,schedules:[]};
+assert.equal(projectNeedsAttention(p,'2026-10-29'),false,'A 100% compliance field with no scheduled work is not a completion rule.');
+assert.equal(projectNeedsAttention({...p,actual:20,planned:40},'2026-10-29'),true);
+assert.equal(projectNeedsAttention({...p,actual:50,planned:40,compliance:125},'2026-10-29'),false,'Preserve compliance above 100 without confusing it with real progress.');
+assert.equal(projectNeedsAttention({...p,schedules:[{end:'2026-10-28',actual:20}]},'2026-10-29'),true);
+assert.equal(projectNeedsAttention({...p,schedules:[{end:'2026-11-01',actual:0}]},'2026-10-29'),false);
+assert.equal(projectNeedsAttention({...p,actual:null,planned:null,schedules:[{end:'2026-10-28',actual:null}]},'2026-10-29'),false,'Missing evidence is not zero.');
+assert.equal(percent(null),'Sin dato visible');assert.equal(percent(0),'0%');assert.equal(percent(125),'125%');
+validateProjectEvidence({});validateProjectEvidence({projects:[p],certifications:[],directory:[]});assert.throws(()=>validateProjectEvidence({projects:[null]}),/incompatibles/);assert.throws(()=>validateProjectEvidence({projects:[{...p,actual:NaN}]}),/incompatibles/);assert.throws(()=>validateProjectEvidence({certifications:{}}),/compatible/);
+console.log('Project checks passed: real vs planned progress, zero, missing values, overdue schedules and source validation.');
