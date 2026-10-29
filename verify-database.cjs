@@ -47,6 +47,10 @@ global.fetch=async(url,options={})=>{
  assert.equal(db.collectSnapshot().evidence.centers[0].centerId,'old-center','Existing source collections must not be replaced by missing-section recovery.');
  assert.equal(JSON.parse(memory.get('nigma_ce_daily_tasks'))[0].checklist[0].done,true);assert.equal(JSON.parse(memory.get('nigma_ce_audit_workspace_v1'))[0].notes,'Keep manual notes');assert.equal(JSON.parse(memory.get('nigma_ce_project_reviews_v1'))['project-test'].notes,'Manual project follow-up');
  assert.equal(db.recoverMissingEvidence(sourceRow),false,'Recovery must be idempotent and must not remount the interface repeatedly.');
+ const taskRow={...sourceRow,payload:{...sourceRow.payload,local:{...sourceRow.payload.local,nigma_ce_daily_tasks:[{id:'local-task',title:'Cloud copy',checklist:[{done:false}]},{id:'cloud-new-task',title:'New source activity',checklist:[{done:false}]}]}}};
+ assert.equal(db.recoverMissingEvidence(taskRow),true,'New cloud activities must be added even when the local agenda already contains work.');
+ const mergedTasks=JSON.parse(memory.get('nigma_ce_daily_tasks'));assert.equal(mergedTasks.find(t=>t.id==='local-task').checklist[0].done,true,'Cloud tasks must not overwrite local checklist progress.');assert.equal(mergedTasks.filter(t=>t.id==='cloud-new-task').length,1);
+ assert.equal(db.recoverMissingEvidence(taskRow),false,'Consulting a copy twice must not duplicate activities.');assert.ok(memory.has('nigma_ce_before_task_recovery'));
  const splitRow={...sourceRow,payload:{...sourceRow.payload,local:{nigma_ce_evidence_v1:{centers:[],indicators:[],entries:[]}}}};
  assert.equal(db.workspaceEvidence(splitRow).projects.length,1);db.restoreWorkspace(splitRow);assert.equal(db.collectSnapshot().evidence.projects.length,1,'Restoration must include supplemental fields from the canonical cloud evidence.');
  memory.clear();assert.equal(db.hasLocalWorkspaceData(),false);
