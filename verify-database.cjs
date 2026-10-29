@@ -37,6 +37,18 @@ global.fetch=async(url,options={})=>{
  const projectBackup=db.collectSnapshot();assert.equal(projectBackup.local.nigma_ce_project_reviews_v1['project-test'].checks[0],true,'Project checklists must be included in private backups.');
  const supplement={centers:[],indicators:[],entries:[],projects:[{id:'project-test',centerId:'test-center',name:'Test fixture',site:'HIC',actual:0,planned:0,compliance:100,schedules:[]}],certifications:[],directory:[]};
  db.importPrivateBackup({schemaVersion:1,evidence:supplement});assert.equal(db.collectSnapshot().evidence.projects[0].actual,0,'Source project values must survive import and backup.');assert.equal(JSON.parse(memory.get('nigma_ce_project_reviews_v1'))['project-test'].notes,'Manual project follow-up','Source imports must not overwrite manual project reviews.');
+ const incomingEvidence={...supplement,certifications:[{centerId:'test-center',name:'Certification test fixture',site:'HIC',date:'2026-10-28'}],directory:[{id:'test-center',name:'Directory test fixture',institution:'HIC'}]};
+ memory.set('nigma_ce_evidence_v1',JSON.stringify({centers:[{centerId:'old-center'}],indicators:[],entries:[]}));memory.set('nigma_ce_daily_tasks',JSON.stringify([{id:'local-task',checklist:[{done:true}]}]));
+ memory.set('nigma_ce_audit_workspace_v1',JSON.stringify([{id:'local-note',notes:'Keep manual notes',checklist:[{done:true}]}]));
+ const sourceRow={...second,payload:{...second.payload,evidence:incomingEvidence}};
+ assert.equal(db.hasLocalWorkspaceData(),true,'Existing local work reproduces the missing-section recovery bug.');
+ assert.equal(db.recoverMissingEvidence(sourceRow),true,'New cloud sections must load even when local work already exists.');
+ assert.equal(db.collectSnapshot().evidence.projects.length,1);assert.equal(db.collectSnapshot().evidence.certifications.length,1);assert.equal(db.collectSnapshot().evidence.directory.length,1);
+ assert.equal(db.collectSnapshot().evidence.centers[0].centerId,'old-center','Existing source collections must not be replaced by missing-section recovery.');
+ assert.equal(JSON.parse(memory.get('nigma_ce_daily_tasks'))[0].checklist[0].done,true);assert.equal(JSON.parse(memory.get('nigma_ce_audit_workspace_v1'))[0].notes,'Keep manual notes');assert.equal(JSON.parse(memory.get('nigma_ce_project_reviews_v1'))['project-test'].notes,'Manual project follow-up');
+ assert.equal(db.recoverMissingEvidence(sourceRow),false,'Recovery must be idempotent and must not remount the interface repeatedly.');
+ const splitRow={...sourceRow,payload:{...sourceRow.payload,local:{nigma_ce_evidence_v1:{centers:[],indicators:[],entries:[]}}}};
+ assert.equal(db.workspaceEvidence(splitRow).projects.length,1);db.restoreWorkspace(splitRow);assert.equal(db.collectSnapshot().evidence.projects.length,1,'Restoration must include supplemental fields from the canonical cloud evidence.');
  memory.clear();assert.equal(db.hasLocalWorkspaceData(),false);
  memory.set('nigma_ce_indicators_v1',JSON.stringify({indicators:[],measurements:[],verifiedMissing:{},checklists:{}}));assert.equal(db.hasLocalWorkspaceData(),false,'An empty form must not prevent cloud recovery.');
  memory.set('nigma_ce_daily_tasks',JSON.stringify([{id:'manual-preserved'}]));assert.equal(db.hasLocalWorkspaceData(),true,'Manual work must prevent automatic replacement.');
