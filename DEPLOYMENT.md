@@ -72,3 +72,11 @@ Se incorporó el módulo Proyectos y certificación, con ficha, objetivos, respo
 El directorio admite registros adicionales cargados desde la copia privada; las correspondencias de nombres pendientes no se fusionan automáticamente. Los centros certificados conservan seguimiento permanente a riesgos, controles, residual, diligenciamiento, metas y planes, con checklist y anotaciones manuales respaldadas. La fecha de certificación no se presenta como vigencia o recertificación confirmada.
 
 Se añadieron comprobaciones para avance cero frente a programado cero, cumplimiento superior a cien, ausencia de métricas, cronogramas pendientes y validación de las fuentes complementarias. El procedimiento de revisión diaria incorpora las fichas y la continuidad del seguimiento posterior a la certificación.
+
+## Corrección de carga de secciones nuevas · 29 de octubre de 2026
+
+Se verificó mediante consulta de solo lectura que la copia de Supabase contiene las colecciones de proyectos y certificaciones tanto en evidencia como en el respaldo local. El fallo era que la existencia de trabajo local impedía incorporar secciones nuevas de una copia consultada.
+
+Al iniciar sesión o consultar la copia, ahora se incorporan únicamente las colecciones ausentes, preservando registros, notas, tareas y checklists existentes. La recuperación completa también contempla los campos complementarios de la evidencia. Mi cuenta y datos muestra por separado los conteos cargados en el navegador y los disponibles en la copia, para distinguir consultar una versión de tener sus datos aplicados. Los filtros sin coincidencias permiten restablecer la vista.
+
+Validación: reproducción con espacio local ya diligenciado, preservación de notas y checklists, recuperación de campos complementarios e idempotencia, más las comprobaciones de indicadores, proyectos y compilación de producción.
