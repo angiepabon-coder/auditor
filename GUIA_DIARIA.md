@@ -37,3 +37,9 @@ Los respaldos JSON contienen información privada. La cuenta del aplicativo es i
 En Inicio o Informes selecciona HIC, ICV o ambas instituciones. Los gráficos muestran autoevaluaciones, matrices, cobertura y planes; cada cifra corresponde al corte cargado. «Datos para Excel» descarga el detalle de centros en CSV. «Imprimir / PDF» abre la impresión del navegador: elige Guardar como PDF. Revisa fechas de consulta y soportes antes de emitir conclusiones.
 
 El seguimiento diario se programó para las 06:00 y el resumen de agenda para las 06:30 de Bogotá. Mantén encendido el equipo y disponibles las sesiones. Si falta acceso a Almera, se debe informar el bloqueo y conservar la fecha del último corte. Las tareas sin compromiso definido se muestran «por acordar».
+
+## Proyectos y certificación
+
+Abre **Proyectos y certificación**. En **Fichas y avance** consulta el avance real, el programado y el cumplimiento mostrado por Almera; despliega la ficha para revisar objetivos, cronogramas, anexos y seguimientos visibles. Cada ficha permite guardar observaciones y checklist, o llevar la revisión a la agenda sin imponer una fecha de compromiso.
+
+En **Centros certificados** consulta la fecha y entidad de la relación aportada y conserva el seguimiento de riesgos, indicadores y metas. Certificación no significa que estos controles estén al día. Vigencia, recertificación y nombres dudosos requieren soporte. Guarda tu trabajo en **Mi cuenta y datos** para recuperarlo en otro navegador.
