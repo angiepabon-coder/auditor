@@ -31,3 +31,10 @@ En Tareas diarias, abrir **Datos para el asistente de agenda** y leer el JSON vi
 El asistente existente integra como máximo tres prioridades con correo y calendario. Las fechas de compromiso vacías son **por acordar**, no vencimientos. No marcar tareas completadas por inferencia. Preparar correos para revisión; no enviar mensajes ni crear o modificar eventos sin instrucción humana explícita para esa acción.
 
 Notificar novedades relevantes, fallos o accesos necesarios. Permanecer en silencio cuando no haya cambios accionables; el asistente de agenda conserva su resumen diario solicitado. No declarar una revisión completa o sincronización en vivo si no se comprobó.
+
+## Fichas de proyecto y centros certificados
+
+6. En Almera, usar Buscar > Proyectos y consultar los proyectos de Centros de Excelencia. Conservar el código, vigencia, responsables, inicio, fin, descripción, objetivos, anexos, seguimientos y tabla de cronogramas. Separar avance real, programado y cumplimiento exactamente como aparecen: cumplimiento de 100% con programado 0% no acredita terminación. Un cumplimiento superior a 100% no debe recortarse ni interpretarse como avance real.
+7. Contrastar centros certificados con las fuentes aportadas por la auditora y el soporte institucional disponible. No inferir certificación por avance del proyecto ni vigencia actual por la sola fecha de certificación. Los nombres dudosos se mantienen separados hasta confirmar correspondencia. La condición de certificado no cierra ni excluye el seguimiento de matriz, controles, residual, diligenciamiento, metas, autoevaluación y planes de mejora.
+
+Las nuevas fichas y certificaciones se guardan como evidencia privada, con cobertura y fecha propias; no se actualiza por ello el corte de indicadores o riesgos. Los registros adicionales del directorio no equivalen a un censo institucional depurado. Conservar también las notas y checklists del módulo Proyectos y certificación en el respaldo de Supabase.
