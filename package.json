@@ -7,7 +7,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node verify-indicator-rules.cjs && node verify-database.cjs",
+    "test": "node verify-indicator-rules.cjs && node verify-database.cjs && node verify-projects.cjs",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
