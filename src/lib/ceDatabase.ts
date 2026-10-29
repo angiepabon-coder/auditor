@@ -49,6 +49,25 @@ export async function checkDatabase(){
  throw new Error('La tabla privada aún no está disponible. Falta aplicar la configuración de la base de datos.');
 }
 export async function readWorkspace():Promise<Workspace|null>{await ensureSession();if(!session)throw new Error('Inicia sesión para consultar tus registros.');const rows=await request('/rest/v1/ce_workspaces?owner_id=eq.'+encodeURIComponent(session.user.id)+'&select=*');return rows[0]||null;}
+export function workspaceEvidence(row:Workspace){
+ const main=row.payload.evidence||{};const legacy=row.payload.local?.nigma_ce_evidence_v1 as Record<string,unknown>|undefined;
+ const result:Record<string,unknown>={};
+ for(const field of ['centers','indicators','entries','projects','certifications','directory'] as const){
+  const primary=main[field];const fallback=legacy?.[field];
+  if(Array.isArray(primary)&&primary.length)result[field]=primary;
+  else if(Array.isArray(fallback))result[field]=fallback;
+  else if(Array.isArray(primary))result[field]=primary;
+ }
+ return result as ReturnType<typeof readPrivateEvidence>;
+}
+export function recoverMissingEvidence(row:Workspace){
+ const incoming=workspaceEvidence(row),existing=readPrivateEvidence();const merged={...existing};let changed=false;
+ for(const field of ['centers','indicators','entries','projects','certifications','directory'] as const){
+  if(!existing[field]?.length&&incoming[field]?.length){Object.assign(merged,{[field]:incoming[field]});changed=true;}
+ }
+ if(changed)importPrivateBackup({schemaVersion:1,evidence:merged});
+ return changed;
+}
 export function collectSnapshot():Snapshot{
  const local:Record<string,unknown>={};for(const key of workspaceKeys){const value=localStorage.getItem(key);if(value!==null)local[key]=JSON.parse(value);}
  return {schemaVersion:1,savedAt:new Date().toISOString(),local,evidence:readPrivateEvidence()};
@@ -74,7 +93,9 @@ export async function saveWorkspace(revision:number|null,payload=collectSnapshot
 }
 export function restoreWorkspace(row:Workspace){
  if(row.payload?.schemaVersion!==1||!row.payload.local||typeof row.payload.local!=='object')throw new Error('Formato de copia no compatible.');
- const values=workspaceKeys.filter(k=>Object.hasOwn(row.payload.local,k)).map(k=>[k,JSON.stringify(row.payload.local[k])] as const);const previous=workspaceKeys.map(k=>[k,localStorage.getItem(k)] as const);
+ const values=workspaceKeys.filter(k=>Object.hasOwn(row.payload.local,k)&&k!=='nigma_ce_evidence_v1').map(k=>[k,JSON.stringify(row.payload.local[k])] as const);const previous=workspaceKeys.map(k=>[k,localStorage.getItem(k)] as const);
+ const restoredEvidence=workspaceEvidence(row);validateProjectEvidence(restoredEvidence);
+ if(Array.isArray(restoredEvidence.centers)&&Array.isArray(restoredEvidence.indicators)&&Array.isArray(restoredEvidence.entries))values.push(['nigma_ce_evidence_v1',JSON.stringify(restoredEvidence)]);
  localStorage.setItem('nigma_ce_before_database_restore',JSON.stringify(Object.fromEntries(previous)));
  try{for(const key of workspaceKeys)localStorage.removeItem(key);for(const [k,v] of values)localStorage.setItem(k,v);}catch(error){for(const [k,v] of previous){if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}throw error;}
  refreshPrivateEvidence();if(typeof window!=='undefined')window.dispatchEvent(new Event('ce-private-evidence-updated'));
