@@ -66,6 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     { label: 'Evidencias', route: '/evidence' as AppRoute, icon: FolderArchive },
     { label: 'Reportes', route: '/reports' as AppRoute, icon: FileBarChart2 },
+    { label: 'Proyectos y certificación', route: '/projects' as AppRoute, icon: ShieldCheck },
     { label: 'Centros de Excelencia', route: '/centers-excellence' as AppRoute, icon: Building2 },
     { label: 'Tareas diarias', route: '/daily-tasks' as AppRoute, icon: ListChecks },
   ];
