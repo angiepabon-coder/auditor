@@ -1,11 +1,12 @@
+import {validateProjectEvidence} from '../data/projectTypes';
 import {readPrivateEvidence,refreshPrivateEvidence} from '../data/privateEvidence';
 export const projectUrl='https://ctelyszqiulavfsowged.supabase.co';
 // Publishable client key only. Access to private records is enforced by RLS.
 const publicKey=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY||'sb_publishable_x4hmozbrJuv7kP6HnZNDAg_EVFF0nq9';
 export const databaseConfigured=!!publicKey;
-export const workspaceKeys=['nigma_ce_audit_workspace_v1','nigma_ce_indicators_v1','nigma_ce_daily_tasks','nigma_ce_review_checklists_v1','nigma_ce_almera_indicator_checklists','nigma_ce_evidence_v1'] as const;
+export const workspaceKeys=['nigma_ce_audit_workspace_v1','nigma_ce_indicators_v1','nigma_ce_daily_tasks','nigma_ce_review_checklists_v1','nigma_ce_almera_indicator_checklists','nigma_ce_evidence_v1','nigma_ce_project_reviews_v1'] as const;
 type Session={access_token:string;refresh_token?:string;expires_at?:number;expires_in?:number;user:{id:string;email?:string}};
-type Snapshot={schemaVersion:1;savedAt:string;local:Record<string,unknown>;evidence:{centers:unknown;indicators:unknown;entries:unknown}};
+type Snapshot={schemaVersion:1;savedAt:string;local:Record<string,unknown>;evidence:{centers:unknown;indicators:unknown;entries:unknown;projects?:unknown;certifications?:unknown;directory?:unknown}};
 export type Workspace={owner_id:string;revision:number;payload:Snapshot;updated_at:string};
 const sessionKey='ce_private_session_v1';
 let retainInTab=false;
@@ -55,7 +56,7 @@ export function collectSnapshot():Snapshot{
 export function workspaceFingerprint(){const {local,evidence}=collectSnapshot();return JSON.stringify({local,evidence});}
 export function hasLocalWorkspaceData(){
  const {local}=collectSnapshot();const evidence=readPrivateEvidence();
- if(evidence.centers.length||evidence.indicators.length||evidence.entries.length)return true;
+ if(evidence.centers.length||evidence.indicators.length||evidence.entries.length||evidence.projects?.length||evidence.certifications?.length||evidence.directory?.length)return true;
  return Object.entries(local).some(([key,value])=>{
   if(key==='nigma_ce_evidence_v1')return false;
   if(Array.isArray(value))return value.length>0;
@@ -81,6 +82,7 @@ export function restoreWorkspace(row:Workspace){
 export function importPrivateBackup(value:unknown){
  const payload=value as Snapshot;
  if(payload?.schemaVersion!==1||!payload.evidence||!Array.isArray(payload.evidence.centers)||!Array.isArray(payload.evidence.indicators)||!Array.isArray(payload.evidence.entries))throw new Error('El archivo no contiene un respaldo privado compatible.');
+ validateProjectEvidence(payload.evidence);
  const evidenceKey='nigma_ce_evidence_v1',workspaceKey='nigma_ce_audit_workspace_v1';
  const previousEvidence=localStorage.getItem(evidenceKey),previousWorkspace=localStorage.getItem(workspaceKey);
  const existing=JSON.parse(previousWorkspace||'[]');if(!Array.isArray(existing))throw new Error('El espacio local necesita revisión antes de importar.');
