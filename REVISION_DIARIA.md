@@ -38,3 +38,13 @@ Notificar novedades relevantes, fallos o accesos necesarios. Permanecer en silen
 7. Contrastar centros certificados con las fuentes aportadas por la auditora y el soporte institucional disponible. No inferir certificación por avance del proyecto ni vigencia actual por la sola fecha de certificación. Los nombres dudosos se mantienen separados hasta confirmar correspondencia. La condición de certificado no cierra ni excluye el seguimiento de matriz, controles, residual, diligenciamiento, metas, autoevaluación y planes de mejora.
 
 Las nuevas fichas y certificaciones se guardan como evidencia privada, con cobertura y fecha propias; no se actualiza por ello el corte de indicadores o riesgos. Los registros adicionales del directorio no equivalen a un censo institucional depurado. Conservar también las notas y checklists del módulo Proyectos y certificación en el respaldo de Supabase.
+
+## Actividades del cargo e intraciclos
+
+En Tareas diarias revisar las actividades incorporadas desde las fuentes privadas de entrega de cargo y comunicaciones. Mantener por separado recepción de información, revisión interna, carga, envío y aprobación de JCI. No completar casillas por inferencia ni tomar la fecha del correo como consulta actual de la plataforma.
+
+Los pasos de checklist que comienzan con `AAAA-MM-DD ·` conservan la fecha de entrega de ese hito. Revisar los pendientes desde 30 días antes; priorizar los últimos 7 días, el día de vencimiento y los compromisos pasados. Un hito histórico sin evidencia genera verificación de recepción, no una declaración automática de incumplimiento. Conservar las fechas finales y su origen (comunicación oficial o control interno por contrastar).
+
+Las actividades mensuales, trimestrales, anuales o condicionadas a una visita conservan la periodicidad descrita en su ficha. Verificar el ciclo vigente y el soporte antes de abrir el siguiente; deduplicar por actividad, centro y periodo. No reabrir ni borrar el checklist anterior. Los días hábiles 4 y 5 se calculan con calendario institucional confirmado; no sustituirlos por fechas calendario ni inventar festivos. Si falta fecha, mostrar compromiso por acordar. Los pasos de preparación de mensajes, carga o cambios en plataformas son tareas de la auditora; no constituyen autorización de envío, edición de Almera, modificación de permisos ni envío a JCI por el asistente.
+
+Incluir estas alertas y fechas en la copia fiel para el asistente existente, con un máximo de tres prioridades diarias. No crear otra automatización por cada centro ni duplicar recordatorios.
