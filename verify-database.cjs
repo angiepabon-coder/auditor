@@ -33,6 +33,10 @@ global.fetch=async(url,options={})=>{
  expired=true;await db.signIn('owner@example.com','test',true);assert.equal(tabMemory.size,1);assert.equal(db.currentAccount(),'owner@example.com');
  await db.readWorkspace();assert.equal(refreshCalls,1,'Expired sessions should be refreshed before accessing private data.');
  assert.equal(JSON.stringify(db.collectSnapshot()).includes('test-refresh-token'),false,'Authentication must never be included in audit backups.');
+ memory.set('nigma_ce_project_reviews_v1',JSON.stringify({'project-test':{notes:'Manual project follow-up',checks:[true,false]}}));
+ const projectBackup=db.collectSnapshot();assert.equal(projectBackup.local.nigma_ce_project_reviews_v1['project-test'].checks[0],true,'Project checklists must be included in private backups.');
+ const supplement={centers:[],indicators:[],entries:[],projects:[{id:'project-test',centerId:'test-center',name:'Test fixture',site:'HIC',actual:0,planned:0,compliance:100,schedules:[]}],certifications:[],directory:[]};
+ db.importPrivateBackup({schemaVersion:1,evidence:supplement});assert.equal(db.collectSnapshot().evidence.projects[0].actual,0,'Source project values must survive import and backup.');assert.equal(JSON.parse(memory.get('nigma_ce_project_reviews_v1'))['project-test'].notes,'Manual project follow-up','Source imports must not overwrite manual project reviews.');
  memory.clear();assert.equal(db.hasLocalWorkspaceData(),false);
  memory.set('nigma_ce_indicators_v1',JSON.stringify({indicators:[],measurements:[],verifiedMissing:{},checklists:{}}));assert.equal(db.hasLocalWorkspaceData(),false,'An empty form must not prevent cloud recovery.');
  memory.set('nigma_ce_daily_tasks',JSON.stringify([{id:'manual-preserved'}]));assert.equal(db.hasLocalWorkspaceData(),true,'Manual work must prevent automatic replacement.');
