@@ -64,3 +64,11 @@ El bloque de ingreso, conexión y respaldos se muestra únicamente en «Mi cuent
 ## Recuperación de información por centro
 
 Al iniciar sesión o abrir una sesión vigente se consulta la copia privada de Supabase. Si el espacio local no contiene trabajo, se recupera automáticamente y se actualiza la interfaz sin recargar ni perder la sesión. Si existen registros manuales, se conservan y se pide elegir la recuperación antes de reemplazarlos. El selector de indicadores muestra el nombre del centro y distingue un corte no recuperado de un centro sin fichas cargadas; no presenta el corte ausente como cumplimiento cero.
+
+## Fichas de proyecto y certificaciones · 29 de octubre de 2026
+
+Se incorporó el módulo Proyectos y certificación, con ficha, objetivos, responsables, vigencia, fechas, cronogramas y comparación entre avance real, programado y cumplimiento de la fuente. La certificación del centro se separa del estado del proyecto. Los datos institucionales y la relación aportada por la auditora se conservan exclusivamente en evidencia privada; el código público solo contiene estructuras y presentación.
+
+El directorio admite registros adicionales cargados desde la copia privada; las correspondencias de nombres pendientes no se fusionan automáticamente. Los centros certificados conservan seguimiento permanente a riesgos, controles, residual, diligenciamiento, metas y planes, con checklist y anotaciones manuales respaldadas. La fecha de certificación no se presenta como vigencia o recertificación confirmada.
+
+Se añadieron comprobaciones para avance cero frente a programado cero, cumplimiento superior a cien, ausencia de métricas, cronogramas pendientes y validación de las fuentes complementarias. El procedimiento de revisión diaria incorpora las fichas y la continuidad del seguimiento posterior a la certificación.
