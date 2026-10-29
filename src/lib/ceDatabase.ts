@@ -65,8 +65,16 @@ export function recoverMissingEvidence(row:Workspace){
  for(const field of ['centers','indicators','entries','projects','certifications','directory'] as const){
   if(!existing[field]?.length&&incoming[field]?.length){Object.assign(merged,{[field]:incoming[field]});changed=true;}
  }
- if(changed)importPrivateBackup({schemaVersion:1,evidence:merged});
- return changed;
+ const taskKey='nigma_ce_daily_tasks',previousTasks=localStorage.getItem(taskKey);
+ const localTasks=JSON.parse(previousTasks||'[]'),remoteTasks=row.payload.local?.[taskKey];
+ if(!Array.isArray(localTasks))throw new Error('Revisa la agenda local antes de recuperar actividades; tus registros se conservan.');
+ const additions=Array.isArray(remoteTasks)?remoteTasks.filter(task=>task&&typeof task.id==='string'&&typeof task.title==='string'&&Array.isArray(task.checklist)&&!localTasks.some(existing=>existing.id===task.id)):[];
+ try{
+  if(additions.length){localStorage.setItem('nigma_ce_before_task_recovery',previousTasks||'[]');localStorage.setItem(taskKey,JSON.stringify([...localTasks,...additions]));}
+  if(changed)importPrivateBackup({schemaVersion:1,evidence:merged});
+  else if(additions.length&&typeof window!=='undefined')window.dispatchEvent(new Event('ce-private-evidence-updated'));
+ }catch(error){if(previousTasks===null)localStorage.removeItem(taskKey);else localStorage.setItem(taskKey,previousTasks);throw error;}
+ return changed||additions.length>0;
 }
 export function collectSnapshot():Snapshot{
  const local:Record<string,unknown>={};for(const key of workspaceKeys){const value=localStorage.getItem(key);if(value!==null)local[key]=JSON.parse(value);}
