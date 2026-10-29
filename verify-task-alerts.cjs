@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');
+const esbuild=require('esbuild');
+const output=esbuild.buildSync({entryPoints:['src/lib/taskAlerts.ts'],bundle:true,write:false,platform:'node',format:'cjs'});
+const mod={exports:{}};new Function('module','exports',output.outputFiles[0].text)(mod,mod.exports);
+const {taskAlerts}=mod.exports;
+const task={id:'fixture',title:'Test task',date:'2026-10-01',dueDate:'2026-11-28',status:'Pendiente',checklist:[{id:'past',label:'2026-10-05 · Verify evidence',done:false}]};
+let alerts=taskAlerts([task],'2026-10-29');assert.equal(alerts.length,2);assert.equal(alerts[0].stepId,'past');assert.match(alerts[0].label,/recepción por verificar/);assert.equal(alerts[1].days,30);
+assert.equal(taskAlerts([{...task,dueDate:'2026-11-29',checklist:[]}],'2026-10-29').length,0);
+assert.equal(taskAlerts([{...task,status:'Completada'}],'2026-10-29').length,0);
+assert.equal(taskAlerts([{...task,dueDate:'',checklist:[{...task.checklist[0],done:true}]}],'2026-10-29').length,0);
+assert.equal(taskAlerts([{...task,dueDate:'2026-10-29',checklist:[]}],'2026-10-29')[0].days,0);
+assert.equal(taskAlerts([{...task,dueDate:'2026-10-28',checklist:[]}],'2026-10-29')[0].level,'danger');
+assert.equal(taskAlerts([{...task,dueDate:'2026-02-30',checklist:[]}],'2026-10-29').length,0);
+assert.equal(taskAlerts([{...task,dueDate:'',checklist:[{id:'plain',label:'Confirm deadline',done:false}]}],'2026-10-29').length,0);
+assert.equal(taskAlerts([task],'invalid').length,0);
+console.log('Task alerts: 30-day boundary, overdue evidence, completed tasks/steps, invalid dates and undated commitments verified.');
