@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { ProjectsView } from '../centers/ProjectsView';
 import { DatabasePanel } from './DatabasePanel';
 import { CommandPalette } from './CommandPalette';
 import { NigmaAIPanel } from './NigmaAIPanel';
@@ -36,6 +37,8 @@ export const AppShell: React.FC = () => {
 
   const renderCurrentView = () => {
     switch (currentRoute) {
+      case '/projects':
+        return <ProjectsView />;
       case '/account':
         return null;
       case '/dashboard':
