@@ -29,6 +29,7 @@ import {
   INITIAL_USERS
 } from '../data/initialData';
 import { CENTER_EXCELLENCE_DATA, INITIAL_DAILY_TASKS } from '../data/centersExcellence';
+import {readPrivateEvidence} from '../data/privateEvidence';
 
 export type AppRoute =
   | '/dashboard'
@@ -47,6 +48,7 @@ export type AppRoute =
   | '/users'
   | '/settings'
   | '/account'
+  | '/projects'
   | '/centers-excellence'
   | '/daily-tasks'
   | '/indicators'
@@ -179,7 +181,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [tests] = useState<AuditTestItem[]>(INITIAL_TESTS);
   const [findings, setFindings] = useState<FindingItem[]>(INITIAL_FINDINGS);
   const [actionPlans, setActionPlans] = useState<ActionPlanItem[]>(INITIAL_ACTION_PLANS);
-  const [centersExcellence] = useState<CenterExcellenceItem[]>(CENTER_EXCELLENCE_DATA);
+  const [centersExcellence] = useState<CenterExcellenceItem[]>(()=>{const rows=[...CENTER_EXCELLENCE_DATA];for(const c of readPrivateEvidence().directory||[])if(!rows.some(r=>r.id===c.id))rows.push({...c,progress:0,completedOnTime:0,completedLate:0,priority:'Media',indicatorStatus:'Pendiente',selfAssessment:'Pendiente',improvementPlan:'Pendiente'});return rows;});
   const [dailyTasks, setDailyTasks] = useState<DailyTaskItem[]>(() => {
     if (typeof window !== 'undefined') {
       try {
