@@ -142,7 +142,7 @@ export const NigmaAIPanel: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-sm text-slate-900 dark:text-white">NIGMA AI Copilot</span>
+              <span className="font-bold text-sm text-slate-900 dark:text-white">Asistente de auditoría</span>
               <span className="text-[10px] bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-semibold border border-indigo-200 dark:border-indigo-800">
                 Contextual
               </span>
@@ -240,7 +240,7 @@ export const NigmaAIPanel: React.FC = () => {
             <div className="w-6 h-6 rounded-md bg-indigo-600/20 text-indigo-600 flex items-center justify-center">
               <Sparkles className="w-3.5 h-3.5 animate-spin" />
             </div>
-            <span>NIGMA AI analizando evidencias y controles...</span>
+            <span>Asistente CE analizando evidencias y controles...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -276,7 +276,7 @@ export const NigmaAIPanel: React.FC = () => {
         >
           <input
             type="text"
-            placeholder="Pregunta a NIGMA AI sobre riesgos, hallazgos, ISO..."
+            placeholder="Pregunta a Asistente CE sobre riesgos, hallazgos, ISO..."
             value={input}
             onChange={e => setInput(e.target.value)}
             className="flex-1 px-3 py-2 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
