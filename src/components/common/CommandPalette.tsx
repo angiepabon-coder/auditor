@@ -228,7 +228,7 @@ export const CommandPalette: React.FC = () => {
             <span>Presiona <kbd className="px-1 py-0.5 bg-white dark:bg-slate-900 border rounded font-mono text-[10px]">ESC</kbd> para salir</span>
             <span>Usa flechas para navegar</span>
           </div>
-          <span className="font-medium text-indigo-600 dark:text-indigo-400">NIGMA Audit Search</span>
+          <span className="font-medium text-indigo-600 dark:text-indigo-400">Buscar en Auditor Centros de Excelencia</span>
         </div>
       </div>
     </div>
