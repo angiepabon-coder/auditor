@@ -121,10 +121,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && (
               <div className="flex flex-col">
                 <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
-                  NIGMA <span className="text-indigo-600 dark:text-indigo-400 font-semibold">AUDIT</span>
+                  Auditor
                 </span>
                 <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-wide">
-                  ENTERPRISE GRC CORE
+                  Centros de Excelencia
                 </span>
               </div>
             )}
@@ -268,7 +268,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">Auditora CE</span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">Auditoría de Centros de Excelencia</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">Auditor Centros de Excelencia</span>
               </div>
             )}
           </div>
