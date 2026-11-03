@@ -87,11 +87,11 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleMobileMenu }) => {
   const getBreadcrumbs = (): { label: string; route?: AppRoute }[] => {
     switch (currentRoute) {
       case '/dashboard':
-        return [{ label: 'NIGMA', route: '/dashboard' }, { label: 'Dashboard Ejecutivo' }];
+        return [{ label: 'Auditor Centros de Excelencia', route: '/dashboard' }, { label: 'Dashboard Ejecutivo' }];
       case '/audit-plan':
-        return [{ label: 'NIGMA', route: '/dashboard' }, { label: 'SIP y gestión de auditoría CE' }];
+        return [{ label: 'Auditor Centros de Excelencia', route: '/dashboard' }, { label: 'SIP y gestión de auditoría CE' }];
       case '/audits':
-        return [{ label: 'NIGMA', route: '/dashboard' }, { label: 'Auditorías' }];
+        return [{ label: 'Auditor Centros de Excelencia', route: '/dashboard' }, { label: 'Auditorías' }];
       case '/audit-detail': {
         const audit = audits.find(a => a.id === selectedAuditId);
         return [
@@ -100,25 +100,25 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleMobileMenu }) => {
         ];
       }
       case '/risks':
-        return [{ label: 'NIGMA', route: '/dashboard' }, { label: 'Matrices de riesgos CE' }];
+        return [{ label: 'Auditor Centros de Excelencia', route: '/dashboard' }, { label: 'Matrices de riesgos CE' }];
       case '/center-review':
         return [{ label: 'Centros de Excelencia' }, { label: 'Revisión integral y seguimiento anual' }];
       case '/indicators':
         return [{ label: 'Centros de Excelencia' }, { label: 'Indicadores: oportunidad y metas' }];
       case '/controls':
-        return [{ label: 'NIGMA', route: '/dashboard' }, { label: 'Catálogo de Controles Internos' }];
+        return [{ label: 'Auditor Centros de Excelencia', route: '/dashboard' }, { label: 'Catálogo de Controles Internos' }];
       case '/findings':
-        return [{ label: 'NIGMA', route: '/dashboard' }, { label: 'Hallazgos de Centros de Excelencia' }];
+        return [{ label: 'Auditor Centros de Excelencia', route: '/dashboard' }, { label: 'Hallazgos de Centros de Excelencia' }];
       case '/action-plans':
-        return [{ label: 'NIGMA', route: '/dashboard' }, { label: 'Planes de Acción y Seguimiento' }];
+        return [{ label: 'Auditor Centros de Excelencia', route: '/dashboard' }, { label: 'Planes de Acción y Seguimiento' }];
       case '/evidence':
-        return [{ label: 'NIGMA', route: '/dashboard' }, { label: 'Repositorio de Evidencias' }];
+        return [{ label: 'Auditor Centros de Excelencia', route: '/dashboard' }, { label: 'Repositorio de Evidencias' }];
       case '/reports':
-        return [{ label: 'NIGMA', route: '/dashboard' }, { label: 'Biblioteca de Reportes' }];
+        return [{ label: 'Auditor Centros de Excelencia', route: '/dashboard' }, { label: 'Biblioteca de Reportes' }];
       case '/centers-excellence':
-        return [{ label: 'NIGMA', route: '/dashboard' }, { label: 'Centros de Excelencia' }];
+        return [{ label: 'Auditor Centros de Excelencia', route: '/dashboard' }, { label: 'Centros de Excelencia' }];
       case '/daily-tasks':
-        return [{ label: 'NIGMA', route: '/dashboard' }, { label: 'Tareas diarias' }];
+        return [{ label: 'Auditor Centros de Excelencia', route: '/dashboard' }, { label: 'Tareas diarias' }];
       case '/organization':
         return [{ label: 'Configuración', route: '/settings' }, { label: 'Jerarquía Organizacional' }];
       case '/audit-profiles':
@@ -133,13 +133,13 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleMobileMenu }) => {
       case '/users':
         return [{ label: 'Configuración', route: '/settings' }, { label: 'Usuarios y Permisos RBAC' }];
       case '/settings':
-        return [{ label: 'NIGMA', route: '/dashboard' }, { label: 'Configuración del Núcleo' }];
+        return [{ label: 'Auditor Centros de Excelencia', route: '/dashboard' }, { label: 'Configuración del Núcleo' }];
       case '/projects':
         return [{ label: 'Centros de Excelencia', route: '/centers-excellence' }, { label: 'Proyectos y certificación' }];
       case '/account':
         return [{ label: 'Centros de Excelencia', route: '/dashboard' }, { label: 'Mi cuenta y datos' }];
       default:
-        return [{ label: 'NIGMA', route: '/dashboard' }];
+        return [{ label: 'Auditor Centros de Excelencia', route: '/dashboard' }];
     }
   };
 
@@ -388,7 +388,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleMobileMenu }) => {
           )}
         </div>
 
-        {/* NIGMA AI Contextual Copilot Access */}
+        {/* Asistente CE Contextual Copilot Access */}
         <button
           onClick={() => setIsAiDrawerOpen(!isAiDrawerOpen)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
@@ -396,10 +396,10 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleMobileMenu }) => {
               ? 'bg-indigo-900 text-indigo-200 border-indigo-700 shadow-inner'
               : 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/60 dark:to-purple-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 hover:border-indigo-400'
           }`}
-          title="Abrir copiloto contextual NIGMA AI"
+          title="Abrir copiloto contextual Asistente CE"
         >
           <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-          <span className="hidden sm:inline font-bold">NIGMA AI</span>
+          <span className="hidden sm:inline font-bold">Asistente CE</span>
         </button>
 
         {/* Dark Mode Toggle */}
