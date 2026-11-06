@@ -108,7 +108,27 @@ export function restoreWorkspace(row:Workspace){
  try{for(const key of workspaceKeys)localStorage.removeItem(key);for(const [k,v] of values)localStorage.setItem(k,v);}catch(error){for(const [k,v] of previous){if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}throw error;}
  refreshPrivateEvidence();if(typeof window!=='undefined')window.dispatchEvent(new Event('ce-private-evidence-updated'));
 }
-export function importPrivateBackup(value:unknown){
+export function importPrivateBackup(value:unknown):void{
+ if(Array.isArray(value)){
+  const evidence=readPrivateEvidence();
+  const projects=evidence.projects||[];
+  const updates=new Map<string,Record<string,unknown>>();
+  for(const entry of value){
+   if(!entry||typeof entry.code!=='string'||!['HIC','ICV'].includes(entry.site)||typeof entry.source!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(entry.checkedOn)||!['actual','planned','compliance'].every(k=>Number.isFinite(entry[k])&&entry[k]>=0)||entry.actual>100||entry.planned>100)throw new Error('Avance de proyecto incompatible.');
+   const key=JSON.stringify([entry.site,entry.code,entry.source]);
+   if(updates.has(key)||projects.filter(p=>JSON.stringify([p.site,p.code,p.source])===key).length!==1)throw new Error('Proyecto duplicado o no identificado en la copia vigente.');
+   updates.set(key,entry);
+  }
+  if(!updates.size)throw new Error('El archivo no contiene avances.');
+  const next=projects.map(p=>{
+   const u=updates.get(JSON.stringify([p.site,p.code,p.source]));
+   if(!u)return p;
+   if(String(u.checkedOn)<p.checkedOn)throw new Error('La copia vigente contiene una consulta más reciente.');
+   return {...p,checkedOn:u.checkedOn,actual:u.actual,planned:u.planned,compliance:u.compliance};
+  });
+  return importPrivateBackup({schemaVersion:1,evidence:{...evidence,projects:next}});
+ }
+
  const payload=value as Snapshot;
  if(payload?.schemaVersion!==1||!payload.evidence||!Array.isArray(payload.evidence.centers)||!Array.isArray(payload.evidence.indicators)||!Array.isArray(payload.evidence.entries))throw new Error('El archivo no contiene un respaldo privado compatible.');
  validateProjectEvidence(payload.evidence);
@@ -122,3 +142,5 @@ export function importPrivateBackup(value:unknown){
  try{localStorage.setItem(workspaceKey,JSON.stringify(merged));localStorage.setItem(evidenceKey,JSON.stringify(payload.evidence));}catch(error){for(const [key,value]of[[workspaceKey,previousWorkspace],[evidenceKey,previousEvidence]]){if(value===null)localStorage.removeItem(key!);else localStorage.setItem(key!,value!);}throw error;}
  refreshPrivateEvidence();if(typeof window!=='undefined')window.dispatchEvent(new Event('ce-private-evidence-updated'));
 }
+
+
