@@ -30,7 +30,7 @@ import { CenterReviewView } from '../centers/CenterReviewView';
 import { CentersExcellenceView } from '../centers/CentersExcellenceView';
 import { DailyTasksView } from '../dailytasks/DailyTasksView';
 
-export const AppShell: React.FC = () => {
+export const AppShell: React.FC<{evidenceVersion: number}> = ({evidenceVersion}) => {
   const { currentRoute, isDarkMode } = useApp();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -110,7 +110,7 @@ export const AppShell: React.FC = () => {
         </div>
 
         {/* Viewport Content */}
-        <main className="flex-1 p-4 lg:p-6 max-w-7xl w-full mx-auto">
+        <main key={evidenceVersion} className="flex-1 p-4 lg:p-6 max-w-7xl w-full mx-auto">
           {renderCurrentView()}
         </main>
       </div>

@@ -4,9 +4,10 @@ const output=esbuild.buildSync({entryPoints:['src/lib/ceDatabase.ts'],bundle:tru
 const memory=new Map();global.localStorage={getItem:k=>memory.get(k)??null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)};
 const tabMemory=new Map();global.sessionStorage={getItem:k=>tabMemory.get(k)??null,setItem:(k,v)=>tabMemory.set(k,v),removeItem:k=>tabMemory.delete(k)};
 const mod={exports:{}};new Function('module','exports',output.outputFiles[0].text)(mod,mod.exports);const db=mod.exports;
-let row=null;let requests=0;let expired=false;let refreshCalls=0;
+let row=null;let requests=0;let expired=false;let refreshCalls=0;let offline=false;
 global.fetch=async(url,options={})=>{
  requests++;
+ if(offline)throw new TypeError('Network unavailable');
  if(url.includes('/auth/v1/logout'))return new Response(null,{status:204});
  if(url.includes('/auth/v1/token')){const renewing=url.includes('grant_type=refresh_token');if(renewing)refreshCalls++;return new Response(JSON.stringify({access_token:renewing?'test-refreshed':'test',refresh_token:'test-refresh-token',expires_at:Math.floor(Date.now()/1000)+(expired&&!renewing?-60:3600),user:{id:'owner',email:'owner@example.com'}}));}
  if(options.method==='POST'){if(row)return new Response('{}',{status:409});row=JSON.parse(options.body);return new Response(JSON.stringify([row]));}
@@ -22,15 +23,28 @@ global.fetch=async(url,options={})=>{
  await assert.rejects(()=>db.saveWorkspace(null),/Ya existe/);
  const second=await db.saveWorkspace(1);assert.equal(second.revision,2);
  await assert.rejects(()=>db.saveWorkspace(1),/versión cambió/);assert.equal(row.revision,2);
+ offline=true;
+ await assert.rejects(()=>db.saveWorkspace(2),db.WorkspaceConnectionError);
+ assert.equal(row.revision,2,'A disconnected client must leave the cloud revision unchanged.');
+ assert.equal(db.currentAccount(),'owner@example.com');
+ offline=false;
  memory.set('nigma_ce_indicators_v1','{}');db.restoreWorkspace(second);assert.equal(memory.get('nigma_ce_indicators_v1'),undefined);assert.ok(memory.has('nigma_ce_before_database_restore'));
  assert.throws(()=>db.importPrivateBackup({}),/compatible/);
  assert.deepEqual(first.payload.evidence,{centers:[],indicators:[],entries:[]});
  const fingerprint=db.workspaceFingerprint();assert.equal(db.workspaceFingerprint(),fingerprint);
+ const ordered=db.collectSnapshot();
+ const equivalentRow={...second,payload:{...ordered,evidence:{entries:[],indicators:[],centers:[]}}};
+ assert.equal(db.workspaceMatchesLocal(equivalentRow,ordered),true,'JSONB key order must not pause automatic saving.');
+ assert.equal(db.workspaceMatchesLocal({...equivalentRow,payload:{...equivalentRow.payload,local:{nigma_ce_daily_tasks:[{id:'cloud-only'}]}}},ordered),false,'Divergent remote work must be reviewed before automatic saving.');
  memory.set('nigma_ce_daily_tasks','[{"id":"changed"}]');assert.notEqual(db.workspaceFingerprint(),fingerprint);
  memory.set('nigma_ce_audit_workspace_v1',JSON.stringify([{id:'manual-only',notes:'Personal note'},{id:'almera-matriz-verificada-test',notes:'Manual observation',created:'2026-01-02',checklist:[{label:'Manual verification',done:true}]}]));
  db.importPrivateBackup({schemaVersion:1,evidence:{centers:[],indicators:[],entries:[{id:'almera-matriz-verificada-test',kind:'Matrices de riesgos',notes:'New source evidence',riskVerification:{checkedOn:'2026-10-28'}}]}});
  const imported=JSON.parse(memory.get('nigma_ce_audit_workspace_v1'));assert.equal(imported.length,2);assert.equal(imported[0].notes,'Personal note');assert.equal(imported[1].notes,'Manual observation');assert.equal(imported[1].created,'2026-01-02');assert.equal(imported[1].checklist[0].done,true);assert.equal(imported[1].sourceNotes,'New source evidence');assert.equal(imported[1].riskVerification.checkedOn,'2026-10-28');assert.equal(db.currentAccount(),'owner@example.com','Import must preserve the signed-in account.');assert.ok(memory.has('nigma_ce_before_private_import'));
  expired=true;await db.signIn('owner@example.com','test',true);assert.equal(tabMemory.size,1);assert.equal(db.currentAccount(),'owner@example.com');
+ offline=true;
+ await assert.rejects(()=>db.readWorkspace(),db.WorkspaceConnectionError);
+ assert.equal(db.currentAccount(),'owner@example.com','A transient refresh error must preserve the session for retry.');
+ offline=false;
  await db.readWorkspace();assert.equal(refreshCalls,1,'Expired sessions should be refreshed before accessing private data.');
  assert.equal(JSON.stringify(db.collectSnapshot()).includes('test-refresh-token'),false,'Authentication must never be included in audit backups.');
  memory.set('nigma_ce_project_reviews_v1',JSON.stringify({'project-test':{notes:'Manual project follow-up',checks:[true,false]}}));

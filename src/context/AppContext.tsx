@@ -129,7 +129,15 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+function readDailyTasks(): DailyTaskItem[] {
+  try {
+    const saved = localStorage.getItem('nigma_ce_daily_tasks');
+    if (saved) return JSON.parse(saved) as DailyTaskItem[];
+  } catch { /* Use initial tasks when storage is unavailable. */ }
+  return INITIAL_DAILY_TASKS;
+}
+
+export const AppProvider: React.FC<{ children: React.ReactNode; evidenceVersion: number }> = ({ children, evidenceVersion }) => {
   const [currentRoute, setCurrentRoute] = useState<AppRoute>(()=>window.location.pathname.replace(/\/$/,'')==='/ingreso'?'/account':'/dashboard');
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('30d');
   const [selectedProfileId, setSelectedProfileId] = useState<string>('profile-1');
@@ -181,16 +189,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [tests] = useState<AuditTestItem[]>(INITIAL_TESTS);
   const [findings, setFindings] = useState<FindingItem[]>(INITIAL_FINDINGS);
   const [actionPlans, setActionPlans] = useState<ActionPlanItem[]>(INITIAL_ACTION_PLANS);
-  const [centersExcellence] = useState<CenterExcellenceItem[]>(()=>{const rows=[...CENTER_EXCELLENCE_DATA];for(const c of readPrivateEvidence().directory||[])if(!rows.some(r=>r.id===c.id))rows.push({...c,progress:0,completedOnTime:0,completedLate:0,priority:'Media',indicatorStatus:'Pendiente',selfAssessment:'Pendiente',improvementPlan:'Pendiente'});return rows;});
-  const [dailyTasks, setDailyTasks] = useState<DailyTaskItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('nigma_ce_daily_tasks');
-        if (saved) return JSON.parse(saved) as DailyTaskItem[];
-      } catch { /* use the seeded monthly tasks when local storage is unavailable */ }
-    }
-    return INITIAL_DAILY_TASKS;
-  });
+  const centersExcellence = useMemo<CenterExcellenceItem[]>(()=>{const rows=[...CENTER_EXCELLENCE_DATA];for(const c of readPrivateEvidence().directory||[])if(!rows.some(r=>r.id===c.id))rows.push({...c,progress:0,completedOnTime:0,completedLate:0,priority:'Media',indicatorStatus:'Pendiente',selfAssessment:'Pendiente',improvementPlan:'Pendiente'});return rows;}, [evidenceVersion]);
+  const [dailyTasks, setDailyTasks] = useState(readDailyTasks);
+  useEffect(() => {
+    if (evidenceVersion > 0) setDailyTasks(readDailyTasks());
+  }, [evidenceVersion]);
   useEffect(() => {
     try { localStorage.setItem('nigma_ce_daily_tasks', JSON.stringify(dailyTasks)); } catch { /* keep the in-memory workflow available */ }
   }, [dailyTasks]);

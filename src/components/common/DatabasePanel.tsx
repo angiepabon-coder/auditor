@@ -2,52 +2,103 @@ import React,{useEffect,useRef,useState} from 'react';
 import {PrivateBackupImport} from './PrivateBackupImport';
 import {useApp} from '../../context/AppContext';
 import {readPrivateEvidence} from '../../data/privateEvidence';
-import {checkDatabase,recoverMissingEvidence,workspaceEvidence,hasLocalWorkspaceData,collectSnapshot,currentAccount,databaseConfigured,readWorkspace,restoreWorkspace,saveWorkspace,signIn,signOut,workspaceFingerprint,Workspace} from '../../lib/ceDatabase';
+import {checkDatabase,recoverMissingEvidence,workspaceEvidence,hasLocalWorkspaceData,collectSnapshot,currentAccount,databaseConfigured,readWorkspace,restoreWorkspace,saveWorkspace,signIn,signOut,workspaceFingerprint,workspaceMatchesLocal,workspaceKeys,WorkspaceConnectionError,type Workspace} from '../../lib/ceDatabase';
 export function DatabasePanel(){
  const {setCurrentRoute}=useApp();
  const [clock,setClock]=useState(()=>new Date());
  const dailyEntry=window.location.pathname.replace(/\/$/,'')==='/ingreso';
- const [open,setOpen]=useState(dailyEntry),[busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[account,setAccount]=useState(currentAccount()),[remote,setRemote]=useState<Workspace|null>(null),[loaded,setLoaded]=useState(false),[restore,setRestore]=useState(false),[ready,setReady]=useState(false),[automatic,setAutomatic]=useState(false),[dirty,setDirty]=useState(false);
+ const [open,setOpen]=useState(dailyEntry),[busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[account,setAccount]=useState(currentAccount()),[remote,setRemote]=useState<Workspace|null>(null),[loaded,setLoaded]=useState(false),[restore,setRestore]=useState(false),[ready,setReady]=useState(false),[automatic,setAutomatic]=useState(true),[dirty,setDirty]=useState(false);
  useEffect(()=>{const timer=setInterval(()=>setClock(new Date()),60000);return()=>clearInterval(timer);},[]);
  const evidence=readPrivateEvidence();
  const latestDate=(dates:(string|undefined)[])=>dates.filter((d):d is string=>!!d&&/^\d{4}-\d{2}-\d{2}$/.test(d)).sort().at(-1)||'Sin consulta registrada';
  const indicatorCut=latestDate(evidence.indicators.map(i=>i.checkedOn));
  const matrixCut=latestDate(evidence.entries.filter(e=>e.kind==='Matrices de riesgos').map(e=>(e as typeof e & {riskVerification?:{checkedOn?:string}}).riskVerification?.checkedOn));
  const today=clock.toLocaleDateString('en-CA',{timeZone:'America/Bogota'});
- const working=useRef(false),remoteRef=useRef<Workspace|null>(null),savedFingerprint=useRef<string|null>(null);
+ const working=useRef(false),remoteRef=useRef<Workspace|null>(null),baseline=useRef<string|null>(null);
+ const retryAt=useRef(0),externalChange=useRef(false);
  function rememberRow(row:Workspace|null){remoteRef.current=row;setRemote(row);}
- async function run(work:()=>Promise<void>){
+ function markSynchronized(fingerprint=workspaceFingerprint()){
+  baseline.current=fingerprint;
+  retryAt.current=0;
+  setReady(true);
+  setDirty(false);
+ }
+ async function run(work:()=>Promise<void>,operation:'read'|'save'|'other'='other'){
   if(working.current)return;working.current=true;setBusy(true);setNotice('');
-  try{await work();}catch(e){setNotice(e instanceof Error?e.message:'No se completó la operación.');setAutomatic(false);setReady(false);const email=currentAccount();setAccount(email);if(!email){setLoaded(false);rememberRow(null);}}
+  try{await work();}catch(e){
+   const message=e instanceof Error?e.message:'No se completó la operación.';
+   const retry=operation==='save'&&ready&&automatic&&e instanceof WorkspaceConnectionError;
+   setNotice(retry?message+' Volveremos a intentar el guardado.':message);
+   if(retry)retryAt.current=Date.now()+30000;
+   else if(operation!=='other')setReady(false);
+   const email=currentAccount();setAccount(email);
+   if(!email){setLoaded(false);setReady(false);baseline.current=null;rememberRow(null);}
+  }
   finally{working.current=false;setBusy(false);}
  }
  async function loadAccountWorkspace(){
-  const row=await readWorkspace();rememberRow(row);setLoaded(true);
+  const previous=remoteRef.current;
+  const row=await readWorkspace();
+  const sameRevision=row?.revision===previous?.revision&&row?.owner_id===previous?.owner_id;
+  rememberRow(row);setLoaded(true);setRestore(false);
+  const copyNotice=row?`Copia consultada: versión ${row.revision}, guardada ${new Date(row.updated_at).toLocaleString('es-CO',{timeZone:'America/Bogota'})}, Bogotá.`:'No hay copia de esta cuenta.';
+  if(ready&&sameRevision&&!externalChange.current){
+   setNotice(copyNotice);
+   return;
+  }
+  externalChange.current=false;
   if(row&&!hasLocalWorkspaceData()){
    restoreWorkspace(row);
-   setNotice('Tu información se recuperó desde Supabase. Ya puedes seleccionar un centro.');
-  }else if(row&&recoverMissingEvidence(row)){
-   setNotice('Se incorporaron las secciones que faltaban desde tu copia. Tus registros manuales se conservan.');
-  }else if(row){
-   const fingerprint=workspaceFingerprint();const matching=fingerprint===JSON.stringify({local:row.payload.local,evidence:row.payload.evidence});
-   if(matching){savedFingerprint.current=fingerprint;setReady(true);setDirty(false);}
-   setNotice(matching?'Tu información coincide con la copia de Supabase.':'Existe una copia en Supabase. Conservamos tus registros locales: consulta o recupera la copia antes de reemplazarlos.');
-  }else setNotice('No hay copia de esta cuenta. Puedes guardar la primera.');
+   markSynchronized();
+   setNotice(copyNotice+' Tu información se recuperó desde Supabase.');
+   return;
+  }
+  const recovered=row&&recoverMissingEvidence(row);
+  if(row?workspaceMatchesLocal(row):!hasLocalWorkspaceData()){
+   markSynchronized();
+   setNotice(copyNotice);
+   return;
+  }
+  baseline.current=null;
+  setReady(false);
+  setDirty(true);
+  setNotice(copyNotice+(recovered?' Se incorporaron las secciones que faltaban.':'')+' Revisa los datos locales antes de guardar o recuperar una copia.');
  }
- useEffect(()=>{if(currentAccount())void run(loadAccountWorkspace);},[]);
+ useEffect(()=>{if(currentAccount())void run(loadAccountWorkspace,'read');},[]);
  async function saveNow(){
-  const snapshot=collectSnapshot();const fingerprint=JSON.stringify({local:snapshot.local,evidence:snapshot.evidence});
-  const row=await saveWorkspace(remoteRef.current?.revision??null,snapshot);rememberRow(row);savedFingerprint.current=fingerprint;setReady(true);setDirty(workspaceFingerprint()!==fingerprint);setNotice(`Guardado en Supabase · versión ${row.revision} · ${new Date(row.updated_at).toLocaleString('es-CO',{timeZone:'America/Bogota'})}, Bogotá.`);
+  const snapshot=collectSnapshot();
+  const fingerprint=workspaceFingerprint(snapshot);
+  externalChange.current=false;
+  const row=await saveWorkspace(remoteRef.current?.revision??null,snapshot);
+  rememberRow(row);
+  if(externalChange.current)return;
+  markSynchronized(fingerprint);
+  setDirty(workspaceFingerprint()!==fingerprint);
+  setNotice(`Guardado en Supabase · versión ${row.revision} · ${new Date(row.updated_at).toLocaleString('es-CO',{timeZone:'America/Bogota'})}, Bogotá.`);
  }
  useEffect(()=>{
   if(!account)return;
+  const pauseForOtherTab=(event:StorageEvent)=>{
+   if(event.storageArea!==localStorage||(event.key!==null&&!workspaceKeys.some(key=>key===event.key)))return;
+   externalChange.current=true;
+   setReady(false);
+   setDirty(true);
+   setNotice('Los datos locales cambiaron en otra pestaña. Consulta la copia antes de continuar con el guardado.');
+  };
+  window.addEventListener('storage',pauseForOtherTab);
   const timer=setInterval(()=>{
-   try{const changed=savedFingerprint.current!==null&&workspaceFingerprint()!==savedFingerprint.current;setDirty(changed);if(changed&&automatic&&ready&&!working.current)void run(saveNow);}catch{setNotice('No se pudo preparar el respaldo. Revisa los datos locales antes de guardar.');setAutomatic(false);}
-  },5000);return()=>clearInterval(timer);
- },[account,automatic,ready]);
- return <section className="mx-4 lg:mx-6 mt-4 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 p-5 text-sm shadow-sm"><header className="mb-3 space-y-2"><h2 className="font-bold text-lg">Ingreso y trabajo diario · Centros de Excelencia</h2><p>Hoy: {clock.toLocaleDateString('es-CO',{timeZone:'America/Bogota',weekday:'long',year:'numeric',month:'long',day:'numeric'})} · Bogotá</p><a className="text-indigo-600 text-xs break-all" href="/ingreso">auditor-centros-excelencia.onrender.com/ingreso</a><div className="flex flex-wrap gap-2">{([['/daily-tasks','Mi agenda y checklist'],['/indicators','Indicadores y alertas'],['/risks','Matrices de riesgos']] as const).map(([route,label])=><button key={route} className="border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 rounded-xl px-3 py-2 text-xs font-semibold" onClick={()=>setCurrentRoute(route)}>{label}</button>)}</div><p className="text-xs text-slate-500">Última consulta cargada: indicadores {indicatorCut} · matrices {matrixCut}. Las fechas corresponden a cada módulo; no prueban que todos sus campos estén verificados.</p>{(indicatorCut!==today||matrixCut!==today)&&<p role="status" className="text-xs text-amber-700 dark:text-amber-300">Hay información sin consulta registrada para hoy. Contrasta las novedades con Almera antes de concluir cumplimiento.</p>}<p className="text-xs text-slate-500">Puedes diligenciar registros y checklists cada día. La fecha y las alertas por vencimiento se calculan al consultar la herramienta. La actualización desde Almera requiere una nueva consulta e importación; aún no hay sincronización automática.</p></header><button aria-expanded={open} className="font-semibold text-indigo-600" onClick={()=>setOpen(!open)}>{account?'Base de datos · Sesión iniciada':'Ingresar a mi cuenta · Base de datos'}</button>{account&&<span className="ml-3 text-xs">{dirty?'Cambios pendientes de guardar':ready?'Copia guardada': 'Consulta la copia para verificar el guardado'}{automatic?' · Guardado automático activo':''}</span>}
- {open&&<div className="space-y-3 mt-3"><p>Guarda una copia privada de registros, planes, indicadores, agenda y checklists. Primero consulta la copia de tu cuenta. Después de tu primer guardado puedes activar el guardado automático mientras esta pestaña esté abierta.</p><button disabled={busy||!databaseConfigured} className="underline disabled:opacity-50" onClick={()=>run(async()=>{await checkDatabase();setNotice('Conexión protegida verificada. Inicia sesión para acceder a tus registros.');})}>Verificar conexión</button>
- {!account?<form className="space-y-3" onSubmit={e=>{e.preventDefault();const form=e.currentTarget;const data=new FormData(form);void run(async()=>{const password=String(data.get('password'));form.reset();await signIn(String(data.get('email')),password,data.get('keepSession')==='on');setAccount(currentAccount());rememberRow(null);setLoaded(false);setReady(false);savedFingerprint.current=null;await loadAccountWorkspace();});}}><div className="flex flex-wrap gap-2"><input aria-label="Correo de acceso a la base de datos" name="email" type="email" required placeholder="Correo de tu cuenta del aplicativo" autoComplete="username" className="border rounded p-2 dark:bg-slate-800"/><input aria-label="Contraseña de acceso a la base de datos" name="password" type="password" required placeholder="Contraseña del aplicativo" autoComplete="current-password" className="border rounded p-2 dark:bg-slate-800"/><button disabled={busy||!databaseConfigured} className="border rounded p-2 disabled:opacity-50">Iniciar sesión</button></div><label className="text-xs flex gap-2"><input type="checkbox" name="keepSession"/>Mantener mi sesión en esta pestaña al recargar</label><p className="text-xs text-slate-500">Esta opción conserva la sesión en la pestaña; no guarda tu contraseña. Al cerrar sesión se elimina.</p></form>:<div className="space-y-3"><p>Cuenta: {account}</p><div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-2 text-xs"><b>Información cargada en este navegador</b><p>{evidence.projects?.length||0} fichas de proyecto · {evidence.certifications?.length||0} certificaciones · {evidence.indicators.length} fichas de indicadores</p>{remote&&<p>Tu copia guardada · versión {remote.revision}: {workspaceEvidence(remote).projects?.length||0} fichas de proyecto · {workspaceEvidence(remote).certifications?.length||0} certificaciones. Consultar la copia incorpora automáticamente las secciones que falten, sin reemplazar tus anotaciones.</p>}</div><div className="flex flex-wrap gap-3"><button disabled={busy} className="underline" onClick={()=>run(async()=>{const row=await readWorkspace();rememberRow(row);setLoaded(true);setRestore(false);setReady(false);setAutomatic(false);savedFingerprint.current=null;setDirty(false);if(row)recoverMissingEvidence(row);setNotice(row?`Copia consultada: versión ${row.revision}, guardada ${new Date(row.updated_at).toLocaleString('es-CO',{timeZone:'America/Bogota'})}. Recupera esa copia o guarda los datos de este navegador según corresponda.`:'No hay copia de esta cuenta. Puedes guardar la primera.');})}>Consultar copia guardada</button><button disabled={busy||!loaded} className="border rounded p-2 disabled:opacity-50" onClick={()=>run(saveNow)}>Guardar en Supabase</button><button disabled={busy||!remote} className="underline disabled:opacity-50" onClick={()=>setRestore(true)}>Recuperar copia en este equipo</button><button disabled={busy} className="underline" onClick={()=>run(async()=>{await signOut();setAccount('');rememberRow(null);setLoaded(false);setReady(false);setAutomatic(false);savedFingerprint.current=null;setNotice('Sesión cerrada. Los registros locales se conservan.');})}>Cerrar sesión</button></div><label className="text-xs flex gap-2"><input type="checkbox" checked={automatic} disabled={!ready||busy} onChange={e=>setAutomatic(e.target.checked)}/>Guardar cambios automáticamente mientras esta pestaña esté abierta</label>{!ready&&<p className="text-xs text-slate-500">Realiza un guardado manual para habilitar esta opción. Un conflicto de versiones o una desconexión pausa el guardado automático y conserva tus cambios locales.</p>}
- {restore&&remote&&<div className="border border-amber-300 rounded p-3"><p>Esto reemplazará los datos locales incluidos en la copia del {new Date(remote.updated_at).toLocaleString('es-CO',{timeZone:'America/Bogota'})}. Se conservará una copia de recuperación local.</p><button className="underline mr-3" disabled={busy} onClick={()=>{try{restoreWorkspace(remote);}catch(e){setNotice(e instanceof Error?e.message:'No se pudo recuperar la copia.');}}}>Confirmar recuperación</button><button onClick={()=>setRestore(false)}>Cancelar</button></div>}</div>}
+   if(baseline.current===null||externalChange.current)return;
+   try{
+    const changed=workspaceFingerprint()!==baseline.current;
+    setDirty(changed);
+    if(changed&&automatic&&ready&&!restore&&!working.current&&Date.now()>=retryAt.current)void run(saveNow,'save');
+   }catch{setNotice('No se pudo preparar el respaldo. Revisa los datos locales antes de guardar.');setReady(false);}
+  },5000);
+  return()=>{clearInterval(timer);window.removeEventListener('storage',pauseForOtherTab);};
+ },[account,automatic,ready,restore]);
+ return <section className="mx-4 lg:mx-6 mt-4 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 p-5 text-sm shadow-sm"><header className="mb-3 space-y-2"><h2 className="font-bold text-lg">Ingreso y trabajo diario · Centros de Excelencia</h2><p>Hoy: {clock.toLocaleDateString('es-CO',{timeZone:'America/Bogota',weekday:'long',year:'numeric',month:'long',day:'numeric'})} · Bogotá</p><a className="text-indigo-600 text-xs break-all" href="/ingreso">auditor-centros-excelencia.onrender.com/ingreso</a><div className="flex flex-wrap gap-2">{([['/daily-tasks','Mi agenda y checklist'],['/indicators','Indicadores y alertas'],['/risks','Matrices de riesgos']] as const).map(([route,label])=><button key={route} className="border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 rounded-xl px-3 py-2 text-xs font-semibold" onClick={()=>setCurrentRoute(route)}>{label}</button>)}</div><p className="text-xs text-slate-500">Última consulta cargada: indicadores {indicatorCut} · matrices {matrixCut}. Las fechas corresponden a cada módulo; no prueban que todos sus campos estén verificados.</p>{(indicatorCut!==today||matrixCut!==today)&&<p role="status" className="text-xs text-amber-700 dark:text-amber-300">Hay información sin consulta registrada para hoy. Contrasta las novedades con Almera antes de concluir cumplimiento.</p>}<p className="text-xs text-slate-500">Puedes diligenciar registros y checklists cada día. La fecha y las alertas por vencimiento se calculan al consultar la herramienta. La actualización desde Almera requiere una nueva consulta e importación; aún no hay sincronización automática.</p></header><button aria-expanded={open} className="font-semibold text-indigo-600" onClick={()=>setOpen(!open)}>{account?'Base de datos · Sesión iniciada':'Ingresar a mi cuenta · Base de datos'}</button>{account&&<span className="ml-3 text-xs">{dirty?'Cambios pendientes de guardar':ready?(remote?'Copia guardada':'Lista para guardar'):'Consulta la copia para verificar el guardado'}{ready&&automatic?' · Guardado automático activo':''}</span>}
+ {open&&<div className="space-y-3 mt-3"><p>Guarda una copia privada de registros, planes, indicadores, agenda y checklists. El guardado automático se activa al verificar la copia de tu cuenta y funciona mientras esta pestaña esté abierta.</p><button disabled={busy||!databaseConfigured} className="underline disabled:opacity-50" onClick={()=>run(async()=>{await checkDatabase();setNotice('Conexión protegida verificada. Inicia sesión para acceder a tus registros.');})}>Verificar conexión</button>
+ {!account?<form className="space-y-3" onSubmit={e=>{e.preventDefault();const form=e.currentTarget;const data=new FormData(form);void run(async()=>{const password=String(data.get('password'));form.reset();await signIn(String(data.get('email')),password,data.get('keepSession')==='on');setAccount(currentAccount());rememberRow(null);setLoaded(false);setReady(false);setAutomatic(true);baseline.current=null;await loadAccountWorkspace();},'read');}}><div className="flex flex-wrap gap-2"><input aria-label="Correo de acceso a la base de datos" name="email" type="email" required placeholder="Correo de tu cuenta del aplicativo" autoComplete="username" className="border rounded p-2 dark:bg-slate-800"/><input aria-label="Contraseña de acceso a la base de datos" name="password" type="password" required placeholder="Contraseña del aplicativo" autoComplete="current-password" className="border rounded p-2 dark:bg-slate-800"/><button disabled={busy||!databaseConfigured} className="border rounded p-2 disabled:opacity-50">Iniciar sesión</button></div><label className="text-xs flex gap-2"><input type="checkbox" name="keepSession"/>Mantener mi sesión en esta pestaña al recargar</label><p className="text-xs text-slate-500">Esta opción conserva la sesión en la pestaña; no guarda tu contraseña. Al cerrar sesión se elimina.</p></form>:<div className="space-y-3"><p>Cuenta: {account}</p><div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-2 text-xs"><b>Información cargada en este navegador</b><p>{evidence.projects?.length||0} fichas de proyecto · {evidence.certifications?.length||0} certificaciones · {evidence.indicators.length} fichas de indicadores</p>{remote&&<p>Tu copia guardada · versión {remote.revision}: {workspaceEvidence(remote).projects?.length||0} fichas de proyecto · {workspaceEvidence(remote).certifications?.length||0} certificaciones. Consultar la copia incorpora automáticamente las secciones que falten, sin reemplazar tus anotaciones.</p>}</div><div className="flex flex-wrap gap-3"><button disabled={busy} className="underline" onClick={()=>run(loadAccountWorkspace,'read')}>Consultar copia guardada</button><button disabled={busy||!loaded} className="border rounded p-2 disabled:opacity-50" onClick={()=>run(saveNow,'save')}>Guardar en Supabase</button><button disabled={busy||!remote} className="underline disabled:opacity-50" onClick={()=>setRestore(true)}>Recuperar copia en este equipo</button><button disabled={busy} className="underline" onClick={()=>run(async()=>{await signOut();setAccount('');rememberRow(null);setLoaded(false);setReady(false);baseline.current=null;setNotice('Sesión cerrada. Los registros locales se conservan.');})}>Cerrar sesión</button></div><label className="text-xs flex gap-2"><input type="checkbox" checked={automatic} disabled={!ready||busy} onChange={e=>setAutomatic(e.target.checked)}/>Guardar cambios automáticamente mientras esta pestaña esté abierta</label>{!ready&&<p className="text-xs text-slate-500">Si hay diferencias entre este navegador y la copia, revisa los datos antes de guardar o recuperar. Los cambios locales se conservan.</p>}
+ {restore&&remote&&<div className="border border-amber-300 rounded p-3"><p>Esto reemplazará los datos locales incluidos en la copia del {new Date(remote.updated_at).toLocaleString('es-CO',{timeZone:'America/Bogota'})}. Se conservará una copia de recuperación local.</p><button className="underline mr-3" disabled={busy} onClick={()=>run(async()=>{restoreWorkspace(remote);externalChange.current=false;markSynchronized();setRestore(false);setNotice('Tu información se recuperó desde Supabase.');},'read')}>Confirmar recuperación</button><button onClick={()=>setRestore(false)}>Cancelar</button></div>}</div>}
  <PrivateBackupImport/><p role="status" className="text-xs">{busy?'Conectando…':notice}</p></div>}</section>;
 }

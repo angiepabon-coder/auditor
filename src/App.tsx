@@ -10,8 +10,8 @@ export default function App() {
   useEffect(()=>{const update=()=>setEvidenceVersion(v=>v+1);window.addEventListener('ce-private-evidence-updated',update);return()=>window.removeEventListener('ce-private-evidence-updated',update);},[]);
   return (
     <ErrorBoundary>
-      <AppProvider key={evidenceVersion}>
-        <AppShell />
+      <AppProvider evidenceVersion={evidenceVersion}>
+        <AppShell evidenceVersion={evidenceVersion} />
       </AppProvider>
     </ErrorBoundary>
   );

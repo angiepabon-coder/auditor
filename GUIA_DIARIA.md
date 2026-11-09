@@ -19,10 +19,9 @@ Guarda este enlace como favorito o escríbelo en la barra de direcciones. Abre e
 
 ## Guardar el trabajo
 
-1. Pulsa **Guardar en Supabase** y comprueba la versión y fecha de confirmación.
-2. Después del primer guardado puedes activar **Guardar cambios automáticamente mientras esta pestaña esté abierta**.
-3. Antes de salir, comprueba que no quede **Cambios pendientes de guardar**. Un conflicto con otro equipo o una desconexión pausa el guardado automático; los cambios permanecen en el navegador.
-4. Al usar otro equipo, inicia sesión y recupera la copia guardada. No sobrescribas una versión más reciente sin revisarla.
+1. Inicia sesión y verifica que **Mi cuenta y datos** muestre **Guardado automático activo**. El aplicativo guarda los cambios mientras esta pestaña esté abierta, incluidas las importaciones de evidencia.
+2. Si la copia de Supabase y este navegador difieren al iniciar sesión, revisa cuál debes conservar antes de guardar o recuperar. La sincronización se activa tras confirmar una copia.
+3. Antes de salir, comprueba la versión y la fecha de confirmación. Si falla la conexión durante el guardado, el aplicativo conserva los cambios en el navegador y reintenta. Si detecta una versión más reciente, pausa el guardado hasta que consultes y revises la copia.
 
 ## Alcance de los datos y de la agenda
 

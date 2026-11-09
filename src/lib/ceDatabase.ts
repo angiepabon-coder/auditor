@@ -8,6 +8,7 @@ export const workspaceKeys=['nigma_ce_audit_workspace_v1','nigma_ce_indicators_v
 type Session={access_token:string;refresh_token?:string;expires_at?:number;expires_in?:number;user:{id:string;email?:string}};
 type Snapshot={schemaVersion:1;savedAt:string;local:Record<string,unknown>;evidence:{centers:unknown;indicators:unknown;entries:unknown;projects?:unknown;certifications?:unknown;directory?:unknown}};
 export type Workspace={owner_id:string;revision:number;payload:Snapshot;updated_at:string};
+export class WorkspaceConnectionError extends Error {}
 const sessionKey='ce_private_session_v1';
 let retainInTab=false;
 let session:Session|null=null;
@@ -21,15 +22,16 @@ export function currentAccount(){return session?.user.email||'';}
 async function ensureSession(){
  if(!session||!session.expires_at||session.expires_at>Date.now()/1000+30)return;
  if(!session.refresh_token){keepSession(null);throw new Error('Tu sesión venció. Inicia sesión nuevamente; los cambios locales se conservan.');}
- if(!refresh)refresh=(async()=>{try{const next=await request('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:JSON.stringify({refresh_token:session?.refresh_token})});if(!next?.user?.id)throw new Error();keepSession(next);}catch{keepSession(null);throw new Error('No se pudo renovar la sesión. Inicia sesión nuevamente; los cambios locales se conservan.');}finally{refresh=null;}})();
+ if(!refresh)refresh=(async()=>{try{const next=await request('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:JSON.stringify({refresh_token:session?.refresh_token})});if(!next?.user?.id)throw new Error();keepSession(next);}catch(error){if(error instanceof WorkspaceConnectionError)throw error;keepSession(null);throw new Error('No se pudo renovar la sesión. Inicia sesión nuevamente; los cambios locales se conservan.');}finally{refresh=null;}})();
  await refresh;
 }
 async function request(path:string,options:RequestInit={}){
  if(!publicKey)throw new Error('La conexión aún no tiene la clave pública del proyecto.');
  const tokenEndpoint=path.startsWith('/auth/v1/token');if(!tokenEndpoint)await ensureSession();
  let response:Response;
- try{response=await fetch(projectUrl+path,{...options,signal:AbortSignal.timeout(15000),headers:{apikey:publicKey,...(!tokenEndpoint&&session?{Authorization:'Bearer '+session.access_token}:{}),'Content-Type':'application/json',...options.headers}});}catch{throw new Error('No se pudo conectar con Supabase. Tus cambios se conservan en este navegador.');}
+ try{response=await fetch(projectUrl+path,{...options,signal:AbortSignal.timeout(15000),headers:{apikey:publicKey,...(!tokenEndpoint&&session?{Authorization:'Bearer '+session.access_token}:{}),'Content-Type':'application/json',...options.headers}});}catch{throw new WorkspaceConnectionError('No se pudo conectar con Supabase. Tus cambios se conservan en este navegador.');}
  if(!response.ok){
+  if(response.status===429||response.status>=500)throw new WorkspaceConnectionError('Supabase no está disponible temporalmente. Tus cambios se conservan en este navegador.');
   if(response.status===401){keepSession(null);throw new Error('Inicia sesión nuevamente en la base de datos.');}
   if(response.status===400&&tokenEndpoint)throw new Error('Verifica tu correo y contraseña. La cuenta debe estar creada y confirmada en Supabase.');
   throw new Error(response.status===409?'Ya existe una copia. Consulta su versión antes de guardar.':`No se completó la operación (${response.status}). Verifica la cuenta y la configuración de la base de datos.`);
@@ -80,7 +82,20 @@ export function collectSnapshot():Snapshot{
  const local:Record<string,unknown>={};for(const key of workspaceKeys){const value=localStorage.getItem(key);if(value!==null)local[key]=JSON.parse(value);}
  return {schemaVersion:1,savedAt:new Date().toISOString(),local,evidence:readPrivateEvidence()};
 }
-export function workspaceFingerprint(){const {local,evidence}=collectSnapshot();return JSON.stringify({local,evidence});}
+export function workspaceFingerprint({local,evidence}=collectSnapshot()){return JSON.stringify({local,evidence});}
+export function workspaceMatchesLocal(row:Workspace,snapshot=collectSnapshot()){
+ const contents=(local:Snapshot['local'],evidence:Snapshot['evidence'])=>{
+  const entries=workspaceKeys.filter(key=>key!=='nigma_ce_evidence_v1'&&Object.hasOwn(local,key));
+  const records=Object.fromEntries(entries.map(key=>[key,local[key]]));
+  // The agenda initializes empty on browsers that have never saved a task.
+  if(Array.isArray(records.nigma_ce_daily_tasks)&&records.nigma_ce_daily_tasks.length===0)delete records.nigma_ce_daily_tasks;
+  // JSONB can reorder object keys when the same data is read back.
+  return JSON.stringify({records,evidence},(_key,value)=>value&&typeof value==='object'&&!Array.isArray(value)
+   ?Object.fromEntries(Object.keys(value).sort().map(key=>[key,value[key]]))
+   :value);
+ };
+ return contents(snapshot.local,snapshot.evidence)===contents(row.payload.local,{...row.payload.evidence,...workspaceEvidence(row)});
+}
 export function hasLocalWorkspaceData(){
  const {local}=collectSnapshot();const evidence=readPrivateEvidence();
  if(evidence.centers.length||evidence.indicators.length||evidence.entries.length||evidence.projects?.length||evidence.certifications?.length||evidence.directory?.length)return true;
