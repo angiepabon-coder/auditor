@@ -7,6 +7,7 @@ export const databaseConfigured=!!publicKey;
 export const workspaceKeys=['nigma_ce_audit_workspace_v1','nigma_ce_indicators_v1','nigma_ce_daily_tasks','nigma_ce_review_checklists_v1','nigma_ce_almera_indicator_checklists','nigma_ce_evidence_v1','nigma_ce_project_reviews_v1'] as const;
 type Session={access_token:string;refresh_token?:string;expires_at?:number;expires_in?:number;user:{id:string;email?:string}};
 type Snapshot={schemaVersion:1;savedAt:string;local:Record<string,unknown>;evidence:{centers:unknown;indicators:unknown;entries:unknown;projects?:unknown;certifications?:unknown;directory?:unknown}};
+type ProjectProgress={actual:number;planned:number;compliance:number};
 export type Workspace={owner_id:string;revision:number;payload:Snapshot;updated_at:string};
 export class WorkspaceConnectionError extends Error {}
 const sessionKey='ce_private_session_v1';
@@ -123,13 +124,17 @@ export function restoreWorkspace(row:Workspace){
  try{for(const key of workspaceKeys)localStorage.removeItem(key);for(const [k,v] of values)localStorage.setItem(k,v);}catch(error){for(const [k,v] of previous){if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}throw error;}
  refreshPrivateEvidence();if(typeof window!=='undefined')window.dispatchEvent(new Event('ce-private-evidence-updated'));
 }
+function validProjectProgress({actual,planned,compliance}:ProjectProgress){
+ return [actual,planned,compliance].every(metric=>Number.isFinite(metric)&&metric>=0)&&actual<=100&&planned<=100;
+}
 export function importPrivateBackup(value:unknown):void{
+ const evidenceKey='nigma_ce_evidence_v1',workspaceKey='nigma_ce_audit_workspace_v1';
  if(Array.isArray(value)){
   const evidence=readPrivateEvidence();
   const projects=evidence.projects||[];
   const updates=new Map<string,Record<string,unknown>>();
   for(const entry of value){
-   if(!entry||typeof entry.code!=='string'||!['HIC','ICV'].includes(entry.site)||typeof entry.source!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(entry.checkedOn)||!['actual','planned','compliance'].every(k=>Number.isFinite(entry[k])&&entry[k]>=0)||entry.actual>100||entry.planned>100)throw new Error('Avance de proyecto incompatible.');
+   if(!entry||typeof entry.code!=='string'||!['HIC','ICV'].includes(entry.site)||typeof entry.source!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(entry.checkedOn)||!validProjectProgress(entry))throw new Error('Avance de proyecto incompatible.');
    const key=JSON.stringify([entry.site,entry.code,entry.source]);
    if(updates.has(key)||projects.filter(p=>JSON.stringify([p.site,p.code,p.source])===key).length!==1)throw new Error('Proyecto duplicado o no identificado en la copia vigente.');
    updates.set(key,entry);
@@ -139,15 +144,33 @@ export function importPrivateBackup(value:unknown):void{
    const u=updates.get(JSON.stringify([p.site,p.code,p.source]));
    if(!u)return p;
    if(String(u.checkedOn)<p.checkedOn)throw new Error('La copia vigente contiene una consulta más reciente.');
-   return {...p,checkedOn:u.checkedOn,actual:u.actual,planned:u.planned,compliance:u.compliance};
+   const updated={...p,checkedOn:u.checkedOn,actual:u.actual,planned:u.planned,compliance:u.compliance};
+   if(u.schedules===undefined)return updated;
+   if(!Array.isArray(u.schedules))throw new Error('Avance de cronograma incompatible.');
+   const scheduleUpdates=new Map<string,ProjectProgress>();
+   for(const update of u.schedules){
+    if(!update||typeof update.source!=='string'||!update.source||!validProjectProgress(update))throw new Error('Avance de cronograma incompatible.');
+    const {source,actual,planned,compliance}=update;
+    if(scheduleUpdates.has(source)||p.schedules.filter(s=>s.source===source).length!==1)throw new Error('Cronograma duplicado o no identificado en el proyecto.');
+    scheduleUpdates.set(source,{actual,planned,compliance});
+   }
+   const schedules=p.schedules.map(schedule=>{
+    const progress=scheduleUpdates.get(schedule.source);
+    return progress?{...schedule,...progress}:schedule;
+   });
+   return {...updated,schedules};
   });
-  return importPrivateBackup({schemaVersion:1,evidence:{...evidence,projects:next}});
+  const nextEvidence={...evidence,projects:next};
+  validateProjectEvidence(nextEvidence);
+  localStorage.setItem('nigma_ce_before_private_import',JSON.stringify({evidence:localStorage.getItem(evidenceKey),workspace:localStorage.getItem(workspaceKey)}));
+  localStorage.setItem(evidenceKey,JSON.stringify(nextEvidence));
+  refreshPrivateEvidence();if(typeof window!=='undefined')window.dispatchEvent(new Event('ce-private-evidence-updated'));
+  return;
  }
 
  const payload=value as Snapshot;
  if(payload?.schemaVersion!==1||!payload.evidence||!Array.isArray(payload.evidence.centers)||!Array.isArray(payload.evidence.indicators)||!Array.isArray(payload.evidence.entries))throw new Error('El archivo no contiene un respaldo privado compatible.');
  validateProjectEvidence(payload.evidence);
- const evidenceKey='nigma_ce_evidence_v1',workspaceKey='nigma_ce_audit_workspace_v1';
  const previousEvidence=localStorage.getItem(evidenceKey),previousWorkspace=localStorage.getItem(workspaceKey);
  const existing=JSON.parse(previousWorkspace||'[]');if(!Array.isArray(existing))throw new Error('El espacio local necesita revisión antes de importar.');
  const matrices=payload.evidence.entries.filter(item=>item&&item.kind==='Matrices de riesgos'&&typeof item.id==='string'&&item.id.startsWith('almera-matriz-verificada-'));
